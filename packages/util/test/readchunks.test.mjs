@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readChunks } from '../src/readChunks.js';
-import { CHUNK_SIZE } from '../../noisytransfer-protocol/src/constants.js';
+import { CHUNK_SIZE } from '@noisytransfer/noisytransfer-protocol/constants.js';
 
 test('readChunks splits blobs by CHUNK_SIZE', async () => {
   const total = CHUNK_SIZE * 2 + 10;

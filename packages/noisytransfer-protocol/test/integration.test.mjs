@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import * as protocol from '@noisytransfer/noisytransfer-protocol';
-import { CHUNK_SIZE } from '@noisytransfer/noisytransfer-protocol/protocol/constants.js';
+import * as protocol from '../src/index.js';
+import { CHUNK_SIZE } from '../src/constants.js';
 
 test('aggregator exports namespaces and constants', () => {
   assert.ok(protocol.crypto);

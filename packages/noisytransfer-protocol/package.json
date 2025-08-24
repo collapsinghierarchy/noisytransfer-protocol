@@ -4,8 +4,9 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    ".": "./src/index.js",
-    "./protocol/constants.js": "./src/protocol/constants.js"
+    "./constants.js": "./src/constants.js",
+    "./*": "./src/*",
+    ".": "./src/index.js"
   },
   "dependencies": {
     "@noisytransfer/noisyauth": "workspace:*",

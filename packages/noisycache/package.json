@@ -3,7 +3,10 @@
   "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
-  "exports": "./src/index.js",
+  "exports": {
+    "./*": "./src/*",
+    ".": "./src/index.js"
+  },
   "dependencies": {
     "@noisytransfer/crypto": "workspace:*",
     "@noisytransfer/errors": "workspace:*",

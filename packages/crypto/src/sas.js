@@ -2,8 +2,11 @@ import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { PROTO_LABEL } from '@noisytransfer/noisyauth/constants.js';
 import { unb64u } from '@noisytransfer/util/base64.js';
 import { asU8, concat, lpConcat } from '@noisytransfer/util/buffer.js';
-import { sha3_256, shake128, toHex } from './hash.js';
+import * as hash from './hash.js';
 import { logger } from '@noisytransfer/util/logger.js';
+
+
+let { sha3_256, shake128, toHex } = hash;
 
 // Lazy SHA3/SHAKE loader (works in Node & browsers)
 async function ensureSHA3() {
