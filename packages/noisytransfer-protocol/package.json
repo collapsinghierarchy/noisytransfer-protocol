@@ -1,10 +1,9 @@
 {
-  "name": "noisytransfer-protocol",
+  "name": "@noisytransfer/noisytransfer-protocol",
   "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    "./constants.js": "./src/constants.js",
     "./*": "./src/*",
     ".": "./src/index.js"
   },

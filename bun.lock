@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "noisytransfer-monorepo",
+      "name": "noisytransfer-js",
       "devDependencies": {
         "wrtc": "^0.4.7",
         "ws": "^8.18.3",
@@ -54,7 +54,7 @@
       },
     },
     "packages/noisytransfer-protocol": {
-      "name": "noisytransfer-protocol",
+      "name": "@noisytransfer/noisytransfer-protocol",
       "version": "0.2.0",
       "dependencies": {
         "@noisytransfer/crypto": "workspace:*",
@@ -81,6 +81,9 @@
     "packages/util": {
       "name": "@noisytransfer/util",
       "version": "0.2.0",
+      "dependencies": {
+        "@noisytransfer/noisytransfer-protocol": "workspace:*",
+      },
     },
   },
   "packages": {
@@ -103,6 +106,8 @@
     "@noisytransfer/noisycache": ["@noisytransfer/noisycache@workspace:packages/noisycache"],
 
     "@noisytransfer/noisystream": ["@noisytransfer/noisystream@workspace:packages/noisystream"],
+
+    "@noisytransfer/noisytransfer-protocol": ["@noisytransfer/noisytransfer-protocol@workspace:packages/noisytransfer-protocol"],
 
     "@noisytransfer/transport": ["@noisytransfer/transport@workspace:packages/transport"],
 
@@ -179,8 +184,6 @@
     "needle": ["needle@2.9.1", "https://registry.npmmirror.com/needle/-/needle-2.9.1.tgz", { "dependencies": { "debug": "^3.2.6", "iconv-lite": "^0.4.4", "sax": "^1.2.4" }, "bin": { "needle": "./bin/needle" } }, "sha512-6R9fqJ5Zcmf+uYaFgdIHmLwNldn5HbK8L5ybn7Uz+ylX/rnOsSp1AHcvQSrCaFN+qNM1wpymHqD7mVasEOlHGQ=="],
 
     "node-pre-gyp": ["node-pre-gyp@0.13.0", "https://registry.npmmirror.com/node-pre-gyp/-/node-pre-gyp-0.13.0.tgz", { "dependencies": { "detect-libc": "^1.0.2", "mkdirp": "^0.5.1", "needle": "^2.2.1", "nopt": "^4.0.1", "npm-packlist": "^1.1.6", "npmlog": "^4.0.2", "rc": "^1.2.7", "rimraf": "^2.6.1", "semver": "^5.3.0", "tar": "^4" }, "bin": { "node-pre-gyp": "./bin/node-pre-gyp" } }, "sha512-Md1D3xnEne8b/HGVQkZZwV27WUi1ZRuZBij24TNaZwUPU3ZAFtvT6xxJGaUVillfmMKnn5oD1HoGsp2Ftik7SQ=="],
-
-    "noisytransfer-protocol": ["noisytransfer-protocol@workspace:packages/noisytransfer-protocol"],
 
     "nopt": ["nopt@4.0.3", "https://registry.npmmirror.com/nopt/-/nopt-4.0.3.tgz", { "dependencies": { "abbrev": "1", "osenv": "^0.1.4" }, "bin": { "nopt": "bin/nopt.js" } }, "sha512-CvaGwVMztSMJLOeXPrez7fyfObdZqNUK1cPAEzLHrTybIua9pMdmmPR5YwtfNftIOMv3DPUhFaxsZMNTQO20Kg=="],
 

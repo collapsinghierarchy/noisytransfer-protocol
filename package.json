@@ -1,5 +1,5 @@
 {
-  "name": "noisytransfer-monorepo",
+  "name": "noisytransfer-js",
   "version": "0.2.0",
   "private": true,
   "type": "module",
