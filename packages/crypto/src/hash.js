@@ -1,5 +1,18 @@
 import { asU8, concat } from '@noisytransfer/util/buffer.js';
 import { u32be } from '@noisytransfer/util/serial.js';
+import { createHash as nodeCreateHash } from 'node:crypto';
+import { Readable } from 'node:stream';
+
+
+// Node helpers ---------------------------------------------------------------
+
+export function createSHA256() {
+  return nodeCreateHash('sha256');
+}
+
+export { Readable };
+
+
 
 /** SHA-256 via WebCrypto; returns Uint8Array */
 export async function sha256(data) {

@@ -2,8 +2,7 @@
 
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { makeManifest, aadFor } from './manifest.js';
-import { createHash } from 'node:crypto';
-import { Readable } from 'node:stream';
+import { createSHA256, Readable } from '@noisytransfer/crypto/hash.js';
 
 function toAsyncIter(source, chunkBytes) {
   // Supports Buffer/Uint8Array, Blob (web), Readable/ReadableStream, or async iterator
@@ -55,7 +54,7 @@ export async function uploadCiphertext({
 
   // 2) Build a streaming body that encrypts on the fly and hashes ciphertext transcript
   const ptIter = toAsyncIter(source, chunkBytes);
-  const sha = createHash('sha256');
+  const sha = createSHA256();
 
   let totalPt = 0, totalCt = 0, seq = 0;
   let firstChunk = true;

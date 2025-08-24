@@ -3,7 +3,10 @@
   "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
-  "exports": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./node.js": "./src/node.js"
+  },
   "dependencies": {
     "@hpke/core": "^1.7.3",
     "@hpke/hybridkem-x25519-kyber768": "^1.6.1",

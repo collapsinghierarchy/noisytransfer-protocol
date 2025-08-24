@@ -1,5 +1,6 @@
 import { concat, boolByte } from "@noisytransfer/util/buffer.js";
 import { u32be } from "@noisytransfer/util/serial.js";
+import { createVerify as nodeCreateVerify } from 'node:crypto';
 
 
 /**
@@ -67,4 +68,11 @@ export async function verifyChunk(verifyKey, signature, data) {
     sig,
     d
   );
+}
+
+
+// Node helpers ---------------------------------------------------------------
+
+export function createRSAVerifier() {
+  return nodeCreateVerify('RSA-SHA256');
 }

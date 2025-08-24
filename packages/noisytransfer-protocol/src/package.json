@@ -3,7 +3,10 @@
   "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
-  "exports": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./protocol/constants.js": "./src/protocol/constants.js"
+  },
   "dependencies": {
     "@noisytransfer/noisyauth": "workspace:*",
     "@noisytransfer/noisystream": "workspace:*",

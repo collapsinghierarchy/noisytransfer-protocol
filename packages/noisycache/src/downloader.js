@@ -1,7 +1,8 @@
 // Parallel Range download + per-chunk decrypt + final verification.
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { validateManifest, ctOffsetOfChunk, ctLenOfChunk, aadFor } from './manifest.js';
-import { createHash, createVerify } from 'node:crypto';
+import { createSHA256 } from '@noisytransfer/crypto/hash.js';
+import { createRSAVerifier } from '@noisytransfer/crypto/signature.js';
 
 export async function downloadAndDecrypt({
   storage,                // HttpStore
@@ -27,7 +28,7 @@ export async function downloadAndDecrypt({
   }
 
   const totalChunks = manifest.totalChunks;
-  const sha = createHash('sha256');
+  const sha = createSHA256();
   let written = 0;
   // Hold finished chunks until we can process them in-order.
   const slots = new Map();         // seq -> { ct: Uint8Array, pt: Uint8Array }
@@ -130,8 +131,9 @@ export async function downloadAndDecrypt({
       let ok = false;
       if (verifyKey.type === 'spki' || typeof verifyKey.export === 'function') {
         // Node KeyObject
-        const v = createVerify('RSA-SHA256');
-        v.update(preimage); v.end();
+        const v = createRSAVerifier();
+        v.update(preimage);
+        v.end();
         ok = v.verify(verifyKey, Buffer.from(manifest.finSignature, 'base64url'));
       } else if (globalThis.crypto?.subtle) {
         ok = await crypto.subtle.verify({ name: 'RSA-PSS', saltLength: 32 }, verifyKey, Buffer.from(manifest.finSignature, 'base64url'), preimage);
