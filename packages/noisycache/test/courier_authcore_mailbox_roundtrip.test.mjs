@@ -12,7 +12,7 @@ import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
 import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';
 import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader.js';
 import { mailboxTransport as mkMailbox } from '@noisytransfer/transport';
-import { suite } from '@noisytransfer/crypto/suite.js';
+import { suite } from '@noisytransfer/crypto';
 import { genRSAPSS } from '@noisytransfer/crypto/signature.js';
 import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache/courier.js';
 import { makeEncryptor, makeDecryptor } from "@noisytransfer/crypto/aead.js";

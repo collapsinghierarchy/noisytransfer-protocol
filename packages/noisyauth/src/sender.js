@@ -50,20 +50,22 @@ export function createAuthSender(tx, hooks = {}, opts = {}) {
     scope.teardown(err);
   }
 
+  let started = false;
   const startSenderPreReady = () => {
+    if (started) return;
+    started = true;
     if (fsm.state === STATES.IDLE) {
       fsm.roomFull(); // IDLE -> WAIT_COMMIT
       timer.arm(STATES.WAIT_COMMIT, "timeout_wait_commit");
     }
   };
-
+  
   attachTransportLifecycle({
-    tx, scope, hooks, fsm,
-    policy: session.policy,
-    startNow:     session.policy === "ws_async" ? startSenderPreReady : null,
-    startWhenUp:  session.policy === "rtc"      ? startSenderPreReady : null,
+    tx, scope, hooks, fsm, policy: session.policy,
+    startNow:    session.policy === "ws_async" ? startSenderPreReady : null,
+    startWhenUp: session.policy === "rtc"      ? startSenderPreReady : null,
   });
- 
+
   // --- options / ids --------------------------------------------------------
   const sendMeta    = opts.sendMeta ?? opts.id?.send ?? null;  // optional metadata
   const expectRecv  = opts.recvMeta ?? opts.id?.recv ?? null;  // optional metadata

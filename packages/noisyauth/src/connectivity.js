@@ -11,67 +11,70 @@ function safeDetail(ev) {
   } catch { return undefined; }
 }
 
-/**
- * @param {{
- *   tx: any,
- *   scope: { addUnsub: (fn:()=>void)=>void, teardown: (err?:any)=>void },
- *   hooks: { onUp?:()=>void, onDown?:()=>void, onError?:(e:any)=>void },
- *   fsm:   any,
- *   policy: "rtc" | "ws_async" | string,
- *   startNow?:     ()=>void,  // mailbox: run immediately
- *   startWhenUp?:  ()=>void,  // rtc: run when DC is open; also microtask fallback
- * }} args
- */
 export function attachTransportLifecycle({
-  tx, scope, hooks, fsm, policy,
-  startNow, startWhenUp,
+  tx,
+  scope,
+  policy,
+  startNow,
+  startWhenUp,
+  onUp,
+  onDown,
 }) {
-  // Ensure we never call the starter concurrently or more than once.
+  const cleanups = [];
   let started = false;
-  let starting = null; // promise guard
-  const runOnce = () => {
+
+  const startOnlyOnce = (fn) => {
     if (started) return;
-    if (!starting) {
-      starting = Promise.resolve()
-        .then(() => {
-          if (started) return;
-          // mark as started *before* awaiting any async work
-          started = true;
-          // Prefer startWhenUp if provided, else startNow
-          if (startWhenUp) return startWhenUp();
-          if (startNow)    return startNow();
-        })
-        .catch(err => {
-          // If the starter throws synchronously, allow retry.
-          started = false;
-          starting = null;
-          throw fromUnknown(err, { where: 'connectivity' });
-        });
-    }
-    return starting;
+    started = true;
+    try { fn && fn(); } catch {}
   };
 
-  const unUp = tx.onUp?.(() => {
-    hooks.onUp?.();
-    runOnce();
-  });
-  if (unUp) scope.addUnsub(unUp);
+  // 1) Start-now on next microtask
+  if (typeof startNow === "function") {
+    queueMicrotask(() => startOnlyOnce(startNow));
+  }
 
-  // onDown: bubble only
-  const unDown = tx.onDown?.(() => { try { hooks.onDown?.(); } catch {} });
-  if (unDown) scope.addUnsub(unDown);
+  const fireUp = () => { onUp?.(); startOnlyOnce(startWhenUp); };
+  const fireDown = () => { onDown?.(); };
 
+  // 2) If already connected, treat as up
+  if (typeof startWhenUp === "function" && tx?.isConnected) {
+    queueMicrotask(fireUp);
+  }
 
-    const unClose = tx.onClose?.((ev) => {
-        const cls = classifyTransportClose(fsm.state);
-        const err = Object.assign(new Error(cls.code), { ...cls, detail: safeDetail(ev) });
-        try { hooks.onError?.(err); } catch {}
-        scope.teardown(err);
+  // 3) Subscribe to explicit up/down signals if present
+  if (typeof tx?.onUp === "function") {
+    cleanups.push(tx.onUp(fireUp));
+  } else if (typeof tx?.onOpen === "function") {
+    cleanups.push(tx.onOpen(fireUp));
+  } else if (typeof tx?.onMessage === "function" && typeof startWhenUp === "function") {
+    // Fallback: treat first message as "up"
+    const unsub = tx.onMessage(function firstMsg() {
+      unsub?.();
+      fireUp();
     });
-  if (unClose) scope.addUnsub(unClose);
+    cleanups.push(unsub);
+  }
 
-  // Kick once via microtask in *all* policies:
-  // - RTC transports often don't emit onUp; the DC wrapper is already "open"
-  // - WS/mailbox may emit onUp later; runOnce() will ignore duplicates
-  queueMicrotask(runOnce);
+  if (typeof tx?.onDown === "function") {
+    cleanups.push(tx.onDown(fireDown));
+  }
+  if (typeof tx?.onClose === "function") {
+    cleanups.push(tx.onClose(fireDown));
+  }
+
+  // 4) **NEW**: FINAL FALLBACK — if we still haven’t started, kick on next tick anyway.
+  // Safe because kickoff functions are idempotent and handle transient send failures internally.
+  if (typeof startWhenUp === "function") {
+    queueMicrotask(() => startOnlyOnce(startWhenUp));   // <—— add this line
+  }
+
+  const teardown = () => {
+    for (const c of cleanups.splice(0)) { try { c && c(); } catch {} }
+  };
+  if (scope?.signal) {
+    if (scope.signal.aborted) teardown();
+    else scope.signal.addEventListener("abort", teardown, { once: true });
+  }
+  return teardown;
 }

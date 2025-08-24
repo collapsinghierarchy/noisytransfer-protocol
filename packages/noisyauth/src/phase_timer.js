@@ -1,31 +1,40 @@
-// Shared “arm timeout with one resend nudge” helper for both roles.
-
-export function makePhaseTimer({ T, resend, onTimeout }) {
-  let t = null;
-  let nudged = false;
+// Shared helpers for phase timeouts
+/**
+ * Create a single-phase timer: at most one active phase at a time.
+ * T is an object mapping PHASE -> ms (e.g. { WAIT_COMMIT: 8000, ... }).
+ */
+export function makePhaseTimer({ T, onTimeout, resend }) {
+  let id = null;
+  let phase = null;
 
   function clear() {
-    if (t) clearTimeout(t);
-    t = null;
-    nudged = false;
+    if (id != null) clearTimeout(id);
+    id = null;
+    phase = null;
   }
 
-  function arm(phase, code) {
+  function arm(nextPhase, code, overrideMs) {
     clear();
-    const ms = T[phase];
-    if (!(ms > 0)) return;
-
-    t = setTimeout(function tick() {
-      if (!nudged) {
-        nudged = true;
-        try { resend?.(); } catch {}
-        // give it one more window after the nudge
-        t = setTimeout(() => onTimeout(code || `timeout_${String(phase).toLowerCase()}`), ms);
-        return;
+    const ms = overrideMs ?? T?.[nextPhase];
+    if (!(ms > 0)) return; // 0 or falsy means "no timeout" for that phase
+    phase = nextPhase;
+    id = setTimeout(() => {
+      id = null;
+      try {
+        // Allow callers to optionally "resend" something on expiry if they want
+        if (typeof resend === 'function') resend(nextPhase, code);
+      } finally {
+        onTimeout?.(code, { phase: nextPhase });
       }
-      onTimeout(code || `timeout_${String(phase).toLowerCase()}`);
     }, ms);
   }
 
-  return { arm, clear };
+  function is(p) { return phase === p; }
+
+  return {
+    arm,
+    clear,
+    is,
+    get phase() { return phase; },
+  };
 }

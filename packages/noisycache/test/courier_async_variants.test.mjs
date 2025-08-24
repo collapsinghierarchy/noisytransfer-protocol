@@ -9,9 +9,9 @@ import WebSocket from 'ws';
 globalThis.WebSocket = WebSocket;
 
 import { mailboxTransport as mkMailbox } from '@noisytransfer/transport';
-import { suite } from '@noisytransfer/crypto/suite.js';
-import { genRSAPSS } from '@noisytransfer/crypto/signature.js';
-import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache/courier.js';
+import { suite } from '@noisytransfer/crypto';
+import { genRSAPSS } from '@noisytransfer/crypto';
+import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache';
 
 const BASE_WS = process.env.NOISY_WS ?? 'ws://localhost:1234/ws';
 

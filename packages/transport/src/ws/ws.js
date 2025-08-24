@@ -1,108 +1,107 @@
-import { binReplacer, binReviver } from "../ser.js";
 import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { binReplacer, binReviver } from "../ser.js";
 
-
-// src/transport/ws/ws.js
 export function browserWSWithReconnect(
   url,
-  { maxRetries = Infinity, backoffMs = [250, 500, 1000, 2000, 5000], protocols } = {}
+  {
+    maxRetries = Infinity,
+    backoffMs = [250, 500, 1000, 2000, 5000],
+    protocols,
+    wsConstructor,
+  } = {}
 ) {
+  const WS = wsConstructor ?? globalThis.WebSocket;
+  if (!WS) throw new NoisyError({ code: "NC_PROTOCOL", message: "WebSocket unavailable (provide wsConstructor or set globalThis.WebSocket)" });
+
   let ws = null;
   let attempts = 0;
   let closedByApp = false;
-  let connected = false;
-  let timers = new Set();
+  let reconnectTimer = null;
 
-  // listeners
-  const onOpenHandlers = new Set();
-  const onMessageHandlers = new Set();
-  const onDownHandlers = new Set();
-  const onUpHandlers = new Set();
-  const onCloseHandlers = new Set(); // <— ONLY for app-close or final give-up
+  const onOpen = new Set();
+  const onUp = new Set();
+  const onDown = new Set();
+  const onClose = new Set();
+  const onMessage = new Set();
 
-  function emit(handlers, ...args) { for (const h of [...handlers]) try { h(...args); } catch {} }
+  const api = {
+    isConnected: false,
+    onOpen(cb){ onOpen.add(cb); return () => onOpen.delete(cb); },
+    onUp(cb){ onUp.add(cb); return () => onUp.delete(cb); },
+    onDown(cb){ onDown.add(cb); return () => onDown.delete(cb); },
+    onClose(cb){ onClose.add(cb); return () => onClose.delete(cb); },
+    onMessage(cb){ onMessage.add(cb); return () => onMessage.delete(cb); },
 
-  function schedule(fn, ms) {
-    const id = setTimeout(() => { timers.delete(id); fn(); }, ms);
-    timers.add(id);
-  }
+    send(data){
+      const payload = (typeof data === "string" || data instanceof ArrayBuffer || ArrayBuffer.isView(data))
+        ? data
+        : JSON.stringify(data, binReplacer);
+      ws?.send?.(payload);
+    },
 
-  function connect() {
-    if (closedByApp) return;
-    ws = new WebSocket(url, protocols);
-    ws.binaryType = "arraybuffer";
-
-    ws.onopen = () => {
-      attempts = 0;
-      const wasDown = !connected;
-      connected = true;
-      if (wasDown) emit(onUpHandlers);
-      emit(onOpenHandlers);
-    };
-
-    ws.onmessage = (ev) => {
-      // Pass raw parsed or string; mailbox layer decides
-      let msg = ev.data;
-      try { if (typeof msg === "string") msg = JSON.parse(msg); } catch {}
-      emit(onMessageHandlers, msg);
-    };
-
-    ws.onclose = () => {
-      const wasUp = connected;
-      connected = false;
-      if (closedByApp) {
-        // Final — app requested close
-        emit(onCloseHandlers, { code: 1000, reason: "app_close" });
-        return;
+    close(code = 1000, reason = "closed"){
+      closedByApp = true;
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      // detach listeners so no late callbacks get queued during shutdown
+      try {
+        ws?.removeEventListener?.("open", _open);
+        ws?.removeEventListener?.("message", _msg);
+        ws?.removeEventListener?.("close", _close);
+        ws?.removeEventListener?.("error", _err);
+      } catch {}
+      // request a clean close
+      try { ws?.close?.(code, reason); } catch {}
+      // if this is Node 'ws', terminate immediately to drop TCP
+      if (ws && typeof ws.terminate === "function") {
+        try { ws.terminate(); } catch {}
       }
-      // Transient drop: notify down, retry
-      if (wasUp) emit(onDownHandlers);
-
-      if (attempts >= maxRetries) {
-        emit(onCloseHandlers, { code: 1006, reason: "exhausted_retries" });
-        return;
-      }
-      const delay = backoffMs[Math.min(attempts, backoffMs.length - 1)];
-      attempts++;
-      schedule(connect, delay);
-    };
-
-    ws.onerror = () => {
-      // errors route into onclose->reconnect; no extra surfacing
-    };
-  }
-
-  // kickoff
-  connect();
-
-  function send(objOrString) {
-    const data = typeof objOrString === "string" ? objOrString : JSON.stringify(objOrString);
-    if (connected && ws?.readyState === WebSocket.OPEN) {
-      ws.send(data);
-      return;
-    }
-    // Not open: drop or buffer? For mailbox we prefer DROP here and let upper layer queue,
-    // because queueing here hides ordering decisions from mailbox.
-    throw new NoisyError({code: "NC_PROTOCOL", message: "ws_not_connected"});
-  }
-
-  function close(code = 1000, reason = "app_close") {
-    closedByApp = true;
-    for (const t of timers) clearTimeout(t);
-    timers.clear();
-    try { ws?.close(code, reason); } catch {}
-    // If underlying doesn’t fire onclose (rare), emit anyway
-    if (connected === false) emit(onCloseHandlers, { code, reason });
-  }
-
-  return {
-    send,
-    close,
-    get isConnected() { return connected; },
-    onOpen(cb)    { onOpenHandlers.add(cb);    return () => onOpenHandlers.delete(cb); },
-    onMessage(cb) { onMessageHandlers.add(cb); return () => onMessageHandlers.delete(cb); },
-    onDown(cb)    { onDownHandlers.add(cb);    return () => onDownHandlers.delete(cb); },
-    onUp(cb)      { onUpHandlers.add(cb);      return () => onUpHandlers.delete(cb); },
-    onClose(cb)   { onCloseHandlers.add(cb);   return () => onCloseHandlers.delete(cb); },
+    },
   };
+
+  const _emit = (set, ev) => { for (const f of set) { try { f(ev); } catch {} } };
+
+  const scheduleReconnect = () => {
+    if (closedByApp) return;
+    if (attempts >= maxRetries) return;
+    const delay = Array.isArray(backoffMs)
+      ? backoffMs[Math.min(attempts, backoffMs.length - 1)]
+      : Number(backoffMs) || 0;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      attempts++;
+      open();
+    }, delay);
+  };
+
+  const _open = () => {
+    attempts = 0;
+    api.isConnected = true;
+    _emit(onOpen);
+    _emit(onUp);
+  };
+  const _msg = (ev) => {
+    let v = ev?.data;
+    if (typeof v === "string") { try { v = JSON.parse(v, binReviver); } catch {} }
+    _emit(onMessage, v);
+  };
+  const _close = (ev) => {
+    api.isConnected = false;
+    _emit(onDown);
+    _emit(onClose, { code: ev?.code, reason: ev?.reason });
+    if (!closedByApp) scheduleReconnect();
+  };
+  const _err = () => { /* close/reconnect will handle */ };
+
+  function open() {
+    if (closedByApp) return;
+    try { ws?.close?.(); } catch {}
+    ws = new WS(url, protocols);
+    ws.addEventListener?.("open", _open);
+    ws.addEventListener?.("message", _msg);
+    ws.addEventListener?.("close", _close);
+    ws.addEventListener?.("error", _err);
+  }
+
+  open();
+  return api;
 }

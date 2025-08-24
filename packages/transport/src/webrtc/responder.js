@@ -1,100 +1,173 @@
-import { shouldAcceptCandidate } from "./rtc-utils.js";
-import { wrapDataChannel } from "./dc.js";
-import { isTransport } from "../core.js";
+// packages/transport/src/webrtc/responder.js
 import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { isTransport } from "../core.js";
+import { shouldAcceptCandidate } from "./rtc-utils.js";
 
-export function rtcResponder(signal, rtcCfg = { iceServers: [] }) {
+/**
+ * Return a Transport facade immediately; connect later when an offer arrives
+ * over the signalling transport. Until the DataChannel is open, send() throws
+ * NC_TRANSPORT_DOWN and isConnected = false.
+ */
+export function rtcResponder(signal, rtcCfg = {}) {
   if (!isTransport(signal)) {
     throw new NoisyError({ code: "NC_PROTOCOL", message: "rtcResponder: 'signal' must be a Transport" });
   }
 
-   return new Promise(async (resolve, reject) => {
-    const ICE_TIMEOUT_MS = Number((globalThis?.NOISY_RTC_ICE_TIMEOUT_MS ?? process?.env?.NOISY_RTC_ICE_TIMEOUT_MS) ?? 15000);
-    const pc = new RTCPeerConnection(rtcCfg);
-    
-    const origRemote2 = pc.setRemoteDescription.bind(pc);
-    pc.setRemoteDescription = async (desc) => {
-      const r = await origRemote2(desc);
-      return r;
-    };
-    const origLocal2 = pc.setLocalDescription.bind(pc);
-    pc.setLocalDescription = async (desc) => {
-      const r = await origLocal2(desc);
-      return r;
-    };
+  // ---- transport facade (immediate) ---------------------------------------
+  let connected = false;
+  const onUpHandlers = new Set();
+  const onDownHandlers = new Set();
+  const onCloseHandlers = new Set();
+  const onMessageHandlers = new Set();
 
-    const send = (m) => signal.send(m);
+  const tx = {
+    get isConnected() { return connected; },
+    onUp(cb)    { onUpHandlers.add(cb);    return () => onUpHandlers.delete(cb); },
+    onDown(cb)  { onDownHandlers.add(cb);  return () => onDownHandlers.delete(cb); },
+    onClose(cb) { onCloseHandlers.add(cb); return () => onCloseHandlers.delete(cb); },
+    onMessage(cb){ onMessageHandlers.add(cb); return () => onMessageHandlers.delete(cb); },
+    send(_) {
+      throw new NoisyError({ code: "NC_TRANSPORT_DOWN", message: "RTC DataChannel not open" });
+    },
+    close(code = 1000, reason = "closed") {
+      try { pc?.close?.(); } catch {}
+      setConnected(false);
+      fireClose({ code, reason });
+    },
+  };
 
-    const pending = [];
-    let haveRemote = false;
+  function fireUp()   { for (const f of [...onUpHandlers])   try { f(); } catch {} }
+  function fireDown() { for (const f of [...onDownHandlers]) try { f(); } catch {} }
+  function fireClose(ev) { for (const f of [...onCloseHandlers]) try { f(ev); } catch {} }
+  function emitMessage(m) { for (const f of [...onMessageHandlers]) try { f(m); } catch {} }
+  function setConnected(v) {
+    if (connected === v) return;
+    connected = v;
+    v ? fireUp() : fireDown();
+  }
 
-    const unsubSignal = signal.onMessage(async (m) => {
-      if (m?.type === "offer") {
-        try { await pc.setRemoteDescription(m.sdp); }
-        catch (err) { throw new NoisyError({ code: "NC_RTC_SDP_FAILED", message: "setRemoteDescription failed", context: { phase: "remote" }, cause: err }); }
-        haveRemote = true;
+  // ---- lazy RTC wiring (on first offer) -----------------------------------
+  let pc = null;
+  let dc = null;
+  let unsubSignal = null;
+  let iceUnsub = null;
 
-        const answer = await pc.createAnswer();
-        try {
-          await pc.setLocalDescription(answer);
-        } catch (err) {
-          throw new NoisyError({
-            code: "NC_RTC_SDP_FAILED",
-            message: "setLocalDescription(answer) failed",
-            context: { phase: "answer" },
-            cause: err,
-          });
-        }
-        const ans = pc.localDescription;
-        send({ type: "answer", sdp: { type: ans.type, sdp: ans.sdp } });
+  const ICE_TIMEOUT_MS = Number(
+    (globalThis?.NOISY_RTC_ICE_TIMEOUT_MS ?? process?.env?.NOISY_RTC_ICE_TIMEOUT_MS) ?? 15000
+  );
+  let iceTimer = null;
 
-        while (pending.length) await pc.addIceCandidate(pending.shift());
-        return;
+  function armIceWatchdog() {
+    clearTimeout(iceTimer);
+    if (ICE_TIMEOUT_MS > 0) {
+      iceTimer = setTimeout(() => {
+        // timeout before DC open — just mark down & close facade
+        try { pc?.close?.(); } catch {}
+        setConnected(false);
+        fireClose({ code: 1011, reason: "NC_RTC_ICE_TIMEOUT" });
+      }, ICE_TIMEOUT_MS);
+    }
+  }
+
+  function clearIceWatchdog() { clearTimeout(iceTimer); iceTimer = null; }
+
+  async function handleOffer(offerMsg) {
+    try {
+      if (!pc) {
+        pc = new RTCPeerConnection(rtcCfg);
+
+        // Outgoing ICE
+        pc.onicecandidate = (ev) => {
+          const c = ev?.candidate;
+          if (!c) return; // sentinel
+          const candObj = c.toJSON?.() ?? { candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex };
+          if (typeof shouldAcceptCandidate === "function" && !shouldAcceptCandidate(candObj, { allowTcp: false, allowLoopbackV6: false })) {
+            return;
+          }
+          signal.send({ type: "ice", cand: candObj });
+        };
+
+        // Incoming ICE (subscribe now; we’ll keep it until close)
+        iceUnsub = signal.onMessage((m) => {
+          if (!m || m.type !== "ice") return;
+          const cand = m.cand ?? m.candidate;
+          if (!cand) return;
+          try { pc.addIceCandidate(new RTCIceCandidate(cand)); } catch {}
+        });
+
+        // DataChannel from initiator
+        pc.ondatachannel = (ev) => {
+          dc = ev.channel;
+          dc.binaryType = "arraybuffer";
+
+          dc.onopen = () => {
+            clearIceWatchdog();
+            // upgrade facade: real send & message path
+            tx.send = (payload) => {
+              const out = (typeof payload === "string" || payload instanceof ArrayBuffer || ArrayBuffer.isView(payload))
+                ? payload
+                : JSON.stringify(payload);
+              dc.send(out);
+            };
+            dc.onmessage = (e) => {
+              let v = e.data;
+              if (typeof v === "string") { try { v = JSON.parse(v); } catch {} }
+              emitMessage(v);
+            };
+            setConnected(true);
+            // no more trickle needed after open
+            try { pc.onicecandidate = null; } catch {}
+          };
+
+          dc.onclose = () => {
+            setConnected(false);
+            fireClose({ code: 1000, reason: "dc closed" });
+          };
+
+          dc.onerror = () => {
+            setConnected(false);
+            fireClose({ code: 1011, reason: "dc error" });
+          };
+        };
       }
-      if (m?.type === "ice") {
-        if (!m.cand) return; // ignore end-of-candidates
-        if (!haveRemote) { pending.push(m.cand); return; }
-        await pc.addIceCandidate(m.cand);
-      }
-    });
 
-    pc.onicecandidate = (ev) => {
-      if (!ev.candidate) return; // skip sentinel in Node/wrtc
-      const candObj = ev.candidate.toJSON?.() ?? {
-        candidate: ev.candidate.candidate,
-        sdpMid: ev.candidate.sdpMid,
-        sdpMLineIndex: ev.candidate.sdpMLineIndex
-      };
-      if (!shouldAcceptCandidate(candObj, { allowTcp: false, allowLoopbackV6: false })) return;
-      send({ type: "ice", cand: candObj });
-    };
+      // Apply offer & send answer
+      const offer = offerMsg.offer ?? offerMsg.sdp;
+      await pc.setRemoteDescription(
+        offer?.type ? offer : new RTCSessionDescription(offer)
+      );
 
-    pc.addEventListener("datachannel", ev => {
-    const dc = ev.channel;
-    dc.binaryType = "arraybuffer";
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      const ld = pc.localDescription;
+      signal.send({ type: "answer", sdp: { type: ld.type, sdp: ld.sdp } });
 
-    // --- DC open watchdog: reject if we never open once channel is created
-    let iceTimer = setTimeout(() => {
-      try { pc.onicecandidate = null; } catch {}
+      // Start ICE watchdog once we’re actively negotiating
+      armIceWatchdog();
+    } catch (e) {
+      // Surface as a transport close; consumer side will observe onClose/onDown
+      try { pc?.close?.(); } catch {}
+      setConnected(false);
+      fireClose({ code: 1011, reason: String(e?.message || e) });
+    }
+  }
+
+  // Listen for signalling; trigger on 'offer'
+  unsubSignal = signal.onMessage((m) => {
+    if (!m || typeof m !== "object") return;
+    if (m.type === "offer" && (m.offer || m.sdp)) {
       try { unsubSignal?.(); } catch {}
-      reject(new NoisyError({
-        code: "NC_RTC_ICE_TIMEOUT",
-        message: "ICE timed out before datachannel open",
-        context: { timeoutMs: ICE_TIMEOUT_MS, role: "responder" },
-        retriable: true,
-      }));
-    }, ICE_TIMEOUT_MS);
-
-    dc.addEventListener("open", () => {
-        try { unsubSignal?.(); } catch {}
-        pc.onicecandidate = null; // stop trickling once we’re connected
-        try { clearTimeout(iceTimer); } catch {}
-        resolve(wrapDataChannel(dc, pc, "Responder"));
-    });
-    dc.addEventListener("error", err => {
-        try { clearTimeout(iceTimer); } catch {}
-        reject(err);
-    });
-    });
+      handleOffer(m);
+    }
   });
+
+  // Teardown wiring when facade closes
+  tx.onClose(() => {
+    clearIceWatchdog();
+    try { unsubSignal?.(); } catch {}
+    try { iceUnsub?.(); } catch {}
+    try { pc?.close?.(); } catch {}
+  });
+
+  return tx; // immediate
 }

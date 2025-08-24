@@ -23,6 +23,13 @@ import {
 } from "@noisytransfer/noisystream";
 import { b64u as bytesToB64u, unb64u as b64uToBytes} from "@noisytransfer/util"
 import * as sig from "@noisytransfer/crypto";
+const isBun = typeof globalThis.Bun !== 'undefined';
+
+if (!isBun) {
+  globalThis.RTCPeerConnection ??= wrtc.RTCPeerConnection;
+  globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
+  globalThis.RTCIceCandidate ??= wrtc.RTCIceCandidate;
+}
 
 const CHUNK = 64 * 1024;
 
@@ -74,7 +81,7 @@ async function dial(role, signal, rtcCfg = {}) {
 
 /* ----------------------------------- test ---------------------------------- */
 
-test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 60_000 }, async () => {
+test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 40000  }, { skip: isBun && 'wrtc not supported by Bun yet' }, async () => {
   const room = crypto.randomUUID();
   const sessionId = crypto.randomUUID();
 

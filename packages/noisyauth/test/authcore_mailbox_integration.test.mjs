@@ -10,7 +10,7 @@ globalThis.WebSocket = WebSocket;
 import { mailboxTransport as mkMailbox } from "@noisytransfer/transport";
 import { createAuthSender } from "@noisytransfer/noisyauth/sender.js";
 import { createAuthReceiver } from "@noisytransfer/noisyauth/receiver.js";
-import { suite } from "@noisytransfer/crypto/suite.js";
+import { suite } from "@noisytransfer/crypto";
 
 const BASE_WS = "ws://localhost:1234/ws";
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
