@@ -12,8 +12,7 @@ globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
 import WebSocket from "ws";
 globalThis.WebSocket = WebSocket;
 
-import { browserWSWithReconnect } from "@noisytransfer/transport/ws/ws.js";
-import { rtcInitiator, rtcResponder } from "@noisytransfer/transport/webrtc/index.js";
+import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 
 // noisystream API (stream-only)
 import { sendFileWithAuth, recvFileWithAuth } from "@noisytransfer/noisystream/index.js";

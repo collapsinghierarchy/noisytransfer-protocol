@@ -3,8 +3,8 @@
   "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
+  "private": true,
   "exports": {
-    "./*": "./src/*",
     ".": "./src/index.js"
   },
   "dependencies": {

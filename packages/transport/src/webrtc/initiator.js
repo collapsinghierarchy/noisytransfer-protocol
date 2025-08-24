@@ -1,6 +1,6 @@
 import { shouldAcceptCandidate } from "./rtc-utils.js";
 import { wrapDataChannel } from "./dc.js";
-import { isTransport } from "../index.js";
+import { isTransport } from "../core.js";
 import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
 import { logger } from "@noisytransfer/util/logger.js";
 

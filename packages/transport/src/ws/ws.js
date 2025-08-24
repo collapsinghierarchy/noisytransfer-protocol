@@ -1,4 +1,3 @@
-// src/transport/ws/ws.js
 import { binReplacer, binReviver } from "../ser.js";
 import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
 

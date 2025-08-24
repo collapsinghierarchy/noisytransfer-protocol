@@ -5,12 +5,12 @@ import { makeScope } from "./lifecycle.js";
 import { makeSessionCtx } from "./session.js";
 import { timeoutsFor } from "./timeouts.js";
 import { makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
-import { computeSASFromFrames } from "@noisytransfer/crypto/sas.js";
+import { computeSASFromFrames } from "@noisytransfer/crypto";
 import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
-import { verifyCommitment } from "@noisytransfer/crypto/commitment.js";
+import { verifyCommitment } from "@noisytransfer/crypto";
 import { STATES } from "./states.js";
 import { SenderFsm } from "./sender_fsm.js";
-import { unb64 } from "@noisytransfer/util/base64.js";
+import { unb64 } from "@noisytransfer/util";
 import { attachTransportLifecycle } from "./connectivity.js";
 import { makePhaseTimer } from "./phase_timer.js";
 

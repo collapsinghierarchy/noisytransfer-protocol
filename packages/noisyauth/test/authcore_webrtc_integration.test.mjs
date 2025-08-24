@@ -13,8 +13,7 @@ const originalGlobals = {
   WebSocket: globalThis.WebSocket
 };
 
-import { browserWSWithReconnect } from "@noisytransfer/transport/ws/ws.js";
-import { rtcInitiator, rtcResponder } from "@noisytransfer/transport/webrtc/index.js";
+import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
 import { suite } from "@noisytransfer/crypto/suite.js";
 import { STATES } from "@noisytransfer/noisyauth/states.js";

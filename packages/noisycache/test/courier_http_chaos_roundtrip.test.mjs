@@ -11,7 +11,7 @@ globalThis.WebSocket = WebSocket;
 import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
 import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';
 import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader.js';
-import { mailboxTransport as mkMailbox } from '@noisytransfer/transport/ws/mailbox.js';
+import { mailboxTransport as mkMailbox } from '@noisytransfer/transport';
 import { suite } from '@noisytransfer/crypto/suite.js';
 import { genRSAPSS } from '@noisytransfer/crypto/signature.js';
 import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache/courier.js';

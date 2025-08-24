@@ -7,7 +7,7 @@ globalThis.crypto ??= webcrypto;
 import WebSocket from "ws";
 globalThis.WebSocket = WebSocket;
 
-import { mailboxTransport as mkMailbox } from "@noisytransfer/transport/ws/mailbox.js";
+import { mailboxTransport as mkMailbox } from "@noisytransfer/transport";
 import { createAuthSender } from "@noisytransfer/noisyauth/sender.js";
 import { createAuthReceiver } from "@noisytransfer/noisyauth/receiver.js";
 import { suite } from "@noisytransfer/crypto/suite.js";

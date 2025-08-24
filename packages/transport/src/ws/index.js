@@ -9,4 +9,5 @@
  * Durable semantics: frames queued while offline; delivery resumes in-order on reconnect.
  * Callers MUST send objects like { type: "xyz", ... } — no dual-arity variants.
  */
-export { mailboxTransport } from "../mailbox.js";
+export { mailboxTransport } from "./mailbox.js";
+export { browserWSWithReconnect } from "./ws.js";
