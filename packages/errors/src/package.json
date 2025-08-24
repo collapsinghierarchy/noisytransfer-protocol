@@ -1,0 +1,7 @@
+{
+  "name": "@noisytransfer/errors",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js"
+}

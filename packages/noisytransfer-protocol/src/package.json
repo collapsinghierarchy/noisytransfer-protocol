@@ -1,0 +1,16 @@
+{
+  "name": "noisytransfer-protocol",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@noisytransfer/noisyauth": "workspace:*",
+    "@noisytransfer/noisystream": "workspace:*",
+    "@noisytransfer/noisycache": "workspace:*",
+    "@noisytransfer/crypto": "workspace:*",
+    "@noisytransfer/errors": "workspace:*",
+    "@noisytransfer/transport": "workspace:*",
+    "@noisytransfer/util": "workspace:*"
+  }
+}

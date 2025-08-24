@@ -1,0 +1,13 @@
+{
+  "name": "@noisytransfer/noisyauth",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@noisytransfer/crypto": "workspace:*",
+    "@noisytransfer/errors": "workspace:*",
+    "@noisytransfer/transport": "workspace:*",
+    "@noisytransfer/util": "workspace:*"
+  }
+}

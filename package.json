@@ -1,22 +1,13 @@
 {
-  "type": "module",
-  "exports": {
-    ".": "./src/index.js",
-    "./noisyauth": "./src/noisyauth/index.js",
-    "./noisystream": "./src/noisystream/index.js",
-    "./noisycache": "./src/noisycache/index.js",
-    "./crypto": "./src/crypto/index.js",
-    "./transport/ws": "./src/transport/ws/index.js",
-    "./errors": "./src/errors/index.js"
-  },
+  "name": "noisytransfer-monorepo",
+  "version": "0.2.0",
   "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
     "wrtc": "^0.4.7",
     "ws": "^8.18.3"
-  },
-  "dependencies": {
-    "@hpke/core": "^1.7.3",
-    "@hpke/hybridkem-x25519-kyber768": "^1.6.1",
-    "@noble/hashes": "^1.5.0"
   }
 }
