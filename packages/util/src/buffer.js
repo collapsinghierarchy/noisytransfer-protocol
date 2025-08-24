@@ -1,4 +1,4 @@
-import { u32be } from '../util/serial.js';
+import { u32be } from './serial.js';
 
 export function asU8(x) {
   if (x instanceof Uint8Array) return x;

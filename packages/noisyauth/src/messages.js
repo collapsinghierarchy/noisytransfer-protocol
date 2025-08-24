@@ -1,6 +1,6 @@
 import { FRAME, ID_KIND } from "./constants.js";
-import { b64url } from "../util/base64.js"; // uses your helpers: b64, unb64, b64url
-import { NoisyError } from '../errors/noisy-error.js';
+import { b64url } from "@noisytransfer/util/base64.js"; // b64, unb64, b64url
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 
 export function isFrame(m, type, sessionId) {
   if (!m || typeof m !== "object") return false;

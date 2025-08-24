@@ -1,4 +1,4 @@
-import { NoisyError } from '../errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 // Minimal FSM for auth-only (no data-transfer states)
 export const STATES = Object.freeze({
   IDLE:        "IDLE",

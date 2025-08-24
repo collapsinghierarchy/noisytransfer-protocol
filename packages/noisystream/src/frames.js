@@ -1,7 +1,6 @@
-// ESM only. Sole responsibility: pack/parse + validate noisystream frames.
-import { b64u, unb64u } from "../util/base64.js";
-import { asU8 } from "../util/buffer.js";
-import { NoisyError } from "../errors/noisy-error.js";
+import { b64u, unb64u } from "@noisytransfer/util/base64.js";
+import { asU8 } from "@noisytransfer/util/buffer.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
 
 /** @typedef {'ns_init'|'ns_ready'|'ns_data'|'ns_fin'} StreamFrameType */
 

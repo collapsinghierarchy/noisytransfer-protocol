@@ -1,6 +1,6 @@
 // Streaming encrypt-and-upload for multi-GB files. Storage- and crypto-agnostic.
 
-import { NoisyError } from '../errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { makeManifest, aadFor } from './manifest.js';
 import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';

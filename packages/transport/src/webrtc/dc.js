@@ -1,5 +1,5 @@
 import { binReplacer, binReviver } from "../ser.js";
-import { asU8, isByteLike } from "../../util/buffer.js";
+import { asU8, isByteLike } from "@noisytransfer/util/buffer.js";
 import { addEvt } from "./rtc-utils.js";
 
 /** Resolve when the DataChannel TX buffer is empty. */

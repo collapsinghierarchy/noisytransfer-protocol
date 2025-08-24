@@ -1,6 +1,6 @@
 // Helpers for manifest math + validation.
 
-import { NoisyError } from '../errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 
 export function be32(n) {
   const b = new Uint8Array(4);

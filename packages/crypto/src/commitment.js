@@ -1,8 +1,7 @@
-// src/crypto/commitment.js
-import { NoisyError } from '../errors/noisy-error.js';
-import { asU8, concat } from '../util/buffer.js';
-import { u32be } from '../util/serial.js';
-import { b64u, unb64u } from '../util/base64.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { asU8, concat } from '@noisytransfer/util/buffer.js';
+import { u32be } from '@noisytransfer/util/serial.js';
+import { b64u, unb64u } from '@noisytransfer/util/base64.js';
 import { sha256, sha3_256, constantTimeEqual } from './hash.js';
 
 const enc = new TextEncoder();

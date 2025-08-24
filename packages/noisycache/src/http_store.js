@@ -1,6 +1,4 @@
-// Minimal HTTP client for the objects API with retries + typed errors.
-
-import { NoisyError, fromUnknown  } from '../errors/noisy-error.js';
+import { NoisyError, fromUnknown  } from '@noisytransfer/errors/noisy-error.js';
 
 const sleep = (ms, signal) => new Promise((res, rej) => {
   const t = setTimeout(res, ms);

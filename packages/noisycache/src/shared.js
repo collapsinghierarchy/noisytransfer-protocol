@@ -1,3 +1,5 @@
+import { b64u } from '@noisytransfer/util/base64.js';
+
 // Shared constants and helpers for the noisycache courier.
 export const FRAME_TYPE = 'nc_courier_v1';
 
@@ -6,7 +8,7 @@ export const FRAME_TYPE = 'nc_courier_v1';
  * @param {{ sessionId: string, enc: Uint8Array|ArrayBuffer, ct: Uint8Array|ArrayBuffer, sig: Uint8Array|ArrayBuffer }} p
  * @returns {{ type: string, sessionId: string, enc: string, ct: string, sig: string, sigAlg: string }}
  */
-import { b64u } from '../util/base64.js';
+
 export function makeCourierFrame({ sessionId, enc, ct, sig }) {
   return {
     type: FRAME_TYPE,

@@ -13,11 +13,11 @@ const originalGlobals = {
   WebSocket: globalThis.WebSocket
 };
 
-import { browserWSWithReconnect } from "../../src/transport/ws/ws.js";
-import { rtcInitiator, rtcResponder } from "../../src/transport/webrtc/index.js";
-import { createAuthSender, createAuthReceiver } from "../../src/noisyauth/index.js";
-import { suite } from "../../src/crypto/suite.js";
-import { STATES } from "../../src/noisyauth/states.js";
+import { browserWSWithReconnect } from "@noisytransfer/transport/ws/ws.js";
+import { rtcInitiator, rtcResponder } from "@noisytransfer/transport/webrtc/index.js";
+import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
+import { suite } from "@noisytransfer/crypto/suite.js";
+import { STATES } from "@noisytransfer/noisyauth/states.js";
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 

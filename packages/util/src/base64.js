@@ -1,5 +1,4 @@
-
-import { NoisyError } from '../errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 
 // Base64 (standard) encoder for Uint8Array|ArrayBuffer
 export function b64(data) {

@@ -8,10 +8,10 @@ globalThis.crypto ??= wc;
 import WebSocket from 'ws';
 globalThis.WebSocket = WebSocket;
 
-import { mailboxTransport as mkMailbox } from '../../src/transport/ws/mailbox.js';
-import { suite } from '../../src/crypto/suite.js';
-import { genRSAPSS } from '../../src/crypto/signature.js';
-import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '../../src/noisycache/courier.js';
+import { mailboxTransport as mkMailbox } from '@noisytransfer/transport/ws/mailbox.js';
+import { suite } from '@noisytransfer/crypto/suite.js';
+import { genRSAPSS } from '@noisytransfer/crypto/signature.js';
+import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache/courier.js';
 
 const BASE_WS = process.env.NOISY_WS ?? 'ws://localhost:1234/ws';
 

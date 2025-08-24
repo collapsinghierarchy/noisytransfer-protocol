@@ -11,20 +11,20 @@ globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
 import WebSocket from "ws";
 globalThis.WebSocket = WebSocket;
 
-import { browserWSWithReconnect } from "../../src/transport/ws/ws.js";
-import { rtcInitiator, rtcResponder } from "../../src/transport/webrtc/index.js";
+import { browserWSWithReconnect } from "@noisytransfer/transport/ws/ws.js";
+import { rtcInitiator, rtcResponder } from "@noisytransfer/transport/webrtc/index.js";
 
-import { createAuthSender } from "../../src/noisyauth/sender.js";
-import { createAuthReceiver } from "../../src/noisyauth/receiver.js";
+import { createAuthSender } from "@noisytransfer/noisyauth/sender.js";
+import { createAuthReceiver } from "@noisytransfer/noisyauth/receiver.js";
 
 import {
   STREAM,
   packStreamInit,
   packStreamData,
   parseStreamData,
-} from "../../src/noisystream/frames.js";
-import { b64u as bytesToB64u, unb64u as b64uToBytes} from "../../src/util/base64.js"
-import * as sig from "../../src/crypto/signature.js";
+} from "@noisytransfer/noisystream/frames.js";
+import { b64u as bytesToB64u, unb64u as b64uToBytes} from "@noisytransfer/util/base64.js"
+import * as sig from "@noisytransfer/crypto/signature.js";
 
 const CHUNK = 64 * 1024;
 

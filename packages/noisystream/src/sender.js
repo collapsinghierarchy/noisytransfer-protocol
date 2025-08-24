@@ -1,8 +1,7 @@
-// src/noisystream/sender.js
-// Sends a byte source over a durable, ordered transport using noisystream frames.
-import { NoisyError } from "../errors/noisy-error.js";
-import { logger } from "../util/logger.js";
-import { asU8, isByteLike } from "../util/buffer.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { logger } from "@noisytransfer/util/logger.js";
+import { asU8, isByteLike } from "@noisytransfer/util/buffer.js";
+
 import {
   STREAM,
   packStreamInit,  parseStreamReady,

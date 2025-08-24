@@ -12,11 +12,11 @@ globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
 import WebSocket from "ws";
 globalThis.WebSocket = WebSocket;
 
-import { browserWSWithReconnect } from "../../src/transport/ws/ws.js";
-import { rtcInitiator, rtcResponder } from "../../src/transport/webrtc/index.js";
+import { browserWSWithReconnect } from "@noisytransfer/transport/ws/ws.js";
+import { rtcInitiator, rtcResponder } from "@noisytransfer/transport/webrtc/index.js";
 
 // noisystream API (stream-only)
-import { sendFileWithAuth, recvFileWithAuth } from "../../src/noisystream/index.js";
+import { sendFileWithAuth, recvFileWithAuth } from "@noisytransfer/noisystream/index.js";
 // frame helpers used in the bottom tests
 import {
   STREAM,
@@ -24,8 +24,8 @@ import {
   packStreamReady, parseStreamReady,
   packStreamData,  parseStreamData,
   packStreamFin,   parseStreamFin
-} from "../../src/noisystream/frames.js";
-import { NoisyError } from "../../src/errors/noisy-error.js";
+} from "@noisytransfer/noisystream/frames.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
 
 /* -------------------------------- helpers ---------------------------------- */
 async function cleanDown(rawA, rawB, sigA, sigB) {

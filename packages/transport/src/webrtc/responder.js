@@ -1,7 +1,7 @@
 import { shouldAcceptCandidate } from "./rtc-utils.js";
 import { wrapDataChannel } from "./dc.js";
 import { isTransport } from "../index.js";
-import { NoisyError } from "../../errors/noisy-error.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
 
 export function rtcResponder(signal, rtcCfg = { iceServers: [] }) {
   if (!isTransport(signal)) {

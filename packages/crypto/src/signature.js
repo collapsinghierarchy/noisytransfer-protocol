@@ -1,5 +1,5 @@
-import { concat, boolByte } from "../util/buffer.js";
-import { u32be } from "../util/serial.js";
+import { concat, boolByte } from "@noisytransfer/util/buffer.js";
+import { u32be } from "@noisytransfer/util/serial.js";
 
 
 /**

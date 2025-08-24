@@ -1,6 +1,5 @@
-// src/crypto/aead.js
-import { asU8 } from "../util/buffer.js";
-import { NoisyError } from "../errors/noisy-error.js";
+import { asU8 } from "@noisytransfer/util/buffer.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
 
 const te = new TextEncoder();
 

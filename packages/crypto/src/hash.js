@@ -1,6 +1,5 @@
-// src/crypto/hash.js
-import { asU8, concat } from '../util/buffer.js';
-import { u32be } from '../util/serial.js';
+import { asU8, concat } from '@noisytransfer/util/buffer.js';
+import { u32be } from '@noisytransfer/util/serial.js';
 
 /** SHA-256 via WebCrypto; returns Uint8Array */
 export async function sha256(data) {

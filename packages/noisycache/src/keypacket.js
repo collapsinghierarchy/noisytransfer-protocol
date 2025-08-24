@@ -11,8 +11,8 @@
 //   hash: string              // hex SHA-256 of ciphertext transcript
 // }
 
-import { NoisyError } from '../errors/noisy-error.js';
-import { b64u, unb64u } from '../util/base64.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { b64u, unb64u } from '@noisytransfer/util/base64.js';
 
 
 export function buildKeyPacket({ id, fk, baseIV, chunkSize, totalSize, chunks, hash }) {

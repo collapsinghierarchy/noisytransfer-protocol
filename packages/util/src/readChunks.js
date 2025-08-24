@@ -1,4 +1,4 @@
-import { CHUNK_SIZE } from "../protocol/constants.js";
+import { CHUNK_SIZE } from "@noisytransfer/noisytransfer-protocol/protocol/constants.js";
 
 export async function* readChunks(blob) {
   const reader = blob.stream().getReader();

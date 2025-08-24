@@ -1,7 +1,5 @@
-// src/noisystream/receiver.js
-// Receives a noisystream transfer and writes to a sink (callback/Writable-like/aggregate).
-import { NoisyError } from "../errors/noisy-error.js";
-import { logger } from "../util/logger.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { logger } from "@noisytransfer/util/logger.js";
 import {
   STREAM,
   parseStreamInit,

@@ -1,5 +1,5 @@
 // Parallel Range download + per-chunk decrypt + final verification.
-import { NoisyError } from '../errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { validateManifest, ctOffsetOfChunk, ctLenOfChunk, aadFor } from './manifest.js';
 import { createHash, createVerify } from 'node:crypto';
 

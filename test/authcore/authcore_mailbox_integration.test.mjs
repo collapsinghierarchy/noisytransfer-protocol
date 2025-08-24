@@ -7,10 +7,10 @@ globalThis.crypto ??= webcrypto;
 import WebSocket from "ws";
 globalThis.WebSocket = WebSocket;
 
-import { mailboxTransport as mkMailbox } from "../../src/transport/ws/mailbox.js";
-import { createAuthSender } from "../../src/noisyauth/sender.js";
-import { createAuthReceiver } from "../../src/noisyauth/receiver.js";
-import { suite } from "../../src/crypto/suite.js";
+import { mailboxTransport as mkMailbox } from "@noisytransfer/transport/ws/mailbox.js";
+import { createAuthSender } from "@noisytransfer/noisyauth/sender.js";
+import { createAuthReceiver } from "@noisytransfer/noisyauth/receiver.js";
+import { suite } from "@noisytransfer/crypto/suite.js";
 
 const BASE_WS = "ws://localhost:1234/ws";
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));

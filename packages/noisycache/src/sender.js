@@ -1,9 +1,9 @@
-import { NoisyError } from '../errors/noisy-error.js';
-import { createAuthSender } from '../noisyauth/sender.js';
-import { suite } from '../crypto/suite.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { createAuthSender } from '@noisytransfer/noisyauth/sender.js';
+import { suite } from '@noisytransfer/crypto/suite.js';
 import { buildKeyPacket } from './keypacket.js';
-import { signChunk } from '../crypto/signature.js';
-import { unb64u } from '../util/base64.js';
+import { signChunk } from '@noisytransfer/crypto/signature.js';
+import { unb64u } from '@noisytransfer/util/base64.js';
 import { makeCourierFrame } from './shared.js';
 
 /**

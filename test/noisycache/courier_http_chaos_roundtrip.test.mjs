@@ -8,14 +8,14 @@ globalThis.crypto ??= wc;
 import WebSocket from 'ws';
 globalThis.WebSocket = WebSocket;
 
-import { HttpStore } from '../../src/noisycache/http_store.js';
-import { uploadCiphertext } from '../../src/noisycache/uploader.js';
-import { downloadAndDecrypt } from '../../src/noisycache/downloader.js';
-import { mailboxTransport as mkMailbox } from '../../src/transport/ws/mailbox.js';
-import { suite } from '../../src/crypto/suite.js';
-import { genRSAPSS } from '../../src/crypto/signature.js';
-import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '../../src/noisycache/courier.js';
-import { makeEncryptor, makeDecryptor } from "../../src/crypto/aead.js";
+import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
+import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';
+import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader.js';
+import { mailboxTransport as mkMailbox } from '@noisytransfer/transport/ws/mailbox.js';
+import { suite } from '@noisytransfer/crypto/suite.js';
+import { genRSAPSS } from '@noisytransfer/crypto/signature.js';
+import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache/courier.js';
+import { makeEncryptor, makeDecryptor } from "@noisytransfer/crypto/aead.js";
 
 const asU8 = (x) => (x instanceof Uint8Array ? x : new Uint8Array(x));
 

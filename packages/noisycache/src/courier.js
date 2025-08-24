@@ -1,11 +1,10 @@
-// src/noisycache/courier.js
-import { NoisyError } from '../errors/noisy-error.js';
-import { createAuthSender } from '../noisyauth/sender.js';
-import { createAuthReceiver } from '../noisyauth/receiver.js';
-import { suite } from '../crypto/suite.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { createAuthSender } from '@noisytransfer/noisyauth/sender.js';
+import { createAuthReceiver } from '@noisytransfer/noisyauth/receiver.js';
+import { suite } from '@noisytransfer/crypto/suite.js';
 import { buildKeyPacket, parseKeyPacket } from './keypacket.js';
-import { signChunk, importVerifyKey, verifyChunk } from '../crypto/signature.js';
-import { b64u, unb64u } from '../util/base64.js';
+import { signChunk, importVerifyKey, verifyChunk } from '@noisytransfer/crypto/signature.js';
+import { b64u, unb64u } from '@noisytransfer/util/base64.js';
 
 
 const FRAME_TYPE = 'nc_courier_v1';

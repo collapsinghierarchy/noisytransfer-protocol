@@ -1,7 +1,7 @@
 // test/crypto/commitment.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeCommitment, verifyCommitment, packCommitment, parseCommitment, randomNonce } from '../../src/crypto/commitment.js';
+import { computeCommitment, verifyCommitment, packCommitment, parseCommitment, randomNonce } from '@noisytransfer/crypto/commitment.js';
 import { webcrypto } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 
