@@ -2,11 +2,16 @@
 
 Frame-based streaming utilities for the NoisyTransfer protocol.
 
-Handles frame encoding/decoding, key management, and sender/receiver
-stream helpers.
+## Exports
+
+- `sendFileWithAuth(opts)`
+- `recvFileWithAuth(opts)`
+- `STREAM` frame type constants
+- Frame helpers: `packStreamInit`, `parseStreamInit`, `packStreamReady`, `parseStreamReady`, `packStreamData`, `parseStreamData`, `packStreamFin`, `parseStreamFin`
+- Type guards: `isStreamInit`, `isStreamReady`, `isStreamData`, `isStreamFin`
 
 ```js
-import { ... } from "@noisytransfer/noisystream";
+import { sendFileWithAuth, STREAM } from "@noisytransfer/noisystream";
 ```
 
 APIs are unstable and may evolve.

@@ -2,11 +2,13 @@
 
 Authentication state machines for establishing a NoisyTransfer session.
 
-Includes sender and receiver FSMs, lifecycle helpers, and message
-formats used during the handshake.
+## Exports
+
+- `createAuthSender(tx, hooks?, opts?)`
+- `createAuthReceiver(tx, hooks?, opts?)`
 
 ```js
-import { ... } from "@noisytransfer/noisyauth";
+import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth";
 ```
 
 APIs are unstable and may change without warning.

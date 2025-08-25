@@ -2,11 +2,16 @@
 
 Shared error utilities used across NoisyTransfer packages.
 
-- `NoisyError` base class with structured error codes
-- Common error `codes`
+## Exports
+
+- `NoisyError` – structured error base class
+- `isNoisyError(e)` – type guard
+- `fromUnknown(code, message, context?, cause?)`
+- `httpStatusToCode(status)` – map HTTP status codes
+- `CODES` – common error code mapping
 
 ```js
-import { ... } from "@noisytransfer/errors";
+import { NoisyError, isNoisyError, CODES } from "@noisytransfer/errors";
 ```
 
 APIs are internal and may change without notice.

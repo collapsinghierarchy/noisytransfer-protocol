@@ -2,11 +2,18 @@
 
 Content caching and transfer helpers for NoisyTransfer.
 
-Provides sender/receiver implementations, keypacket and manifest
-handling, and HTTP-backed storage utilities.
+## Exports
+
+- `uploadCiphertext({ storage, source, encryptor, ... })`
+- `downloadAndDecrypt({ storage, objectId, manifest, decryptor, ... })`
+- `runCourierSender({ tx, sessionId, sendMsg, keyPacket, signingKey })`
+- `mkSendMsgWithVK(verificationKeyU8)`
+- `runCourierReceiver({ tx, sessionId, recvMsg, recipientPrivateKey })`
+- `buildKeyPacket(details)`
+- `parseKeyPacket(bytes)`
 
 ```js
-import { ... } from "@noisytransfer/noisycache";
+import { uploadCiphertext, downloadAndDecrypt } from "@noisytransfer/noisycache";
 ```
 
 APIs are experimental and may change.

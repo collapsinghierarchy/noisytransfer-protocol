@@ -12,5 +12,9 @@
     "@noisytransfer/errors": "workspace:*",
     "@noisytransfer/transport": "workspace:*",
     "@noisytransfer/util": "workspace:*"
+  },
+  "devDependencies": {
+    "@roamhq/wrtc": "^0.9.0",
+    "ws": "^8.18.3"
   }
 }

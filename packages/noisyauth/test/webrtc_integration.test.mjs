@@ -10,7 +10,7 @@ import { test } from "node:test";
 import { webcrypto } from "node:crypto";
 import { setTimeout as delay } from 'node:timers/promises';
 import net from "node:net";
-import wrtc from "wrtc";
+import wrtc from "@roamhq/wrtc";
 import WS from "ws";  // Renamed import to avoid conflict
 
 // Store original globals for restoration

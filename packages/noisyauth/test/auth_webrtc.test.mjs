@@ -6,7 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { webcrypto } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 
-import wrtc from "wrtc";
+import wrtc from "@roamhq/wrtc";
 globalThis.RTCPeerConnection     ??= wrtc.RTCPeerConnection;
 globalThis.RTCIceCandidate       ??= wrtc.RTCIceCandidate;
 globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;

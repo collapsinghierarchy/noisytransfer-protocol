@@ -4,7 +4,7 @@ import { test } from "node:test";
 import { webcrypto } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 
-import wrtc from "wrtc";
+import wrtc from "@roamhq/wrtc";
 globalThis.RTCPeerConnection     ??= wrtc.RTCPeerConnection;
 globalThis.RTCIceCandidate       ??= wrtc.RTCIceCandidate;
 globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;

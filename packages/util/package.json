@@ -6,8 +6,5 @@
    "exports": {
     "./*": "./src/*",
     ".": "./src/index.js"
-  },
-   "dependencies": {
-    "@noisytransfer/noisytransfer-protocol": "workspace:*"
   }
 }
