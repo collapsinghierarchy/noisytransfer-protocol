@@ -1,10 +1,14 @@
 {
   "name": "@noisytransfer/util",
-  "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
-   "exports": {
-    "./*": "./src/*",
-    ".": "./src/index.js"
+  "exports": {
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js",
+    "./base64.js": "./src/base64.js",
+    "./buffer.js": "./src/buffer.js",
+    "./serial.js": "./src/serial.js",
+    "./async.js": "./src/async.js",
+    "./logger.js": "./src/logger.js"
   }
 }

@@ -3,24 +3,23 @@
   "version": "0.1.0",
   "type": "module",
   "bin": { "noisy": "bin/noisy.js" },
-  "engines": { "node": ">=18.17" },
   "dependencies": {
-    "@noisytransfer/transport": "file:../transport",
-    "@noisytransfer/noisystream": "file:../noisystream",
-    "@noisytransfer/noisyauth": "file:../noisyauth",
-    "@noisytransfer/crypto": "file:../crypto",
-    "@noisytransfer/util": "file:../util",
+    "@noisytransfer/transport": "workspace:*",
+    "@noisytransfer/noisystream": "workspace:*",
+    "@noisytransfer/noisyauth": "workspace:*",
+    "@noisytransfer/crypto": "workspace:*",
+    "@noisytransfer/util": "workspace:*",
     "@roamhq/wrtc": "^0.9.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
-    "@yao-pkg/pkg": "^6.0.0"
+    "@yao-pkg/pkg": "^6.6.0"
   },
   "scripts": {
-    "build:bin:host": "pkg -C Brotli -t host -o dist/noisy bin/noisy.js",
-    "build:bin:linux": "pkg -C Brotli -t latest-linux-x64   -o dist/noisy-linux-x64   bin/noisy.js",
-    "build:bin:mac":   "pkg -C Brotli -t latest-macos-arm64 -o dist/noisy-macos-arm64 bin/noisy.js",
-    "build:bin:win":   "pkg -C Brotli -t latest-win-x64     -o dist/noisy-win-x64.exe bin/noisy.js",
+    "build:bin:host": "pkg -C Brotli -t host -o dist/noisy .",
+    "build:bin:linux": "pkg -C Brotli -t latest-linux-x64   -o dist/noisy-linux-x64   .",
+    "build:bin:mac":   "pkg -C Brotli -t latest-macos-arm64 -o dist/noisy-macos-arm64 .",
+    "build:bin:win":   "pkg -C Brotli -t latest-win-x64     -o dist/noisy-win-x64.exe .",
     "build:bin": "pnpm run build:bin:host"
   },
   "pkg": {

@@ -4,8 +4,10 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    "./*": "./src/*",
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js",
+    "./frames.js": "./src/frames.js",
+    "./frames": "./src/frames.js"
   },
   "dependencies": {
     "@noisytransfer/crypto": "workspace:*",

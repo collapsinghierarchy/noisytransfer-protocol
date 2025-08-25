@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./node.js": "./src/node.js"
+    "./index.js": "./src/index.js",
+    "./suite.js": "./src/suite.js",
+    "./signature.js": "./src/signature.js"
   },
   "dependencies": {
     "@hpke/core": "^1.7.3",

@@ -13,7 +13,7 @@ globalThis.WebSocket = WebSocket;
 
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 
-import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth";
+import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
 
 import {
   STREAM,

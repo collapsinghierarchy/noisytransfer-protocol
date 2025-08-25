@@ -4,13 +4,15 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    "./*": "./src/*",
-    ".": "./src/index.js"
+    ".": "./src/index.js",
+    "./index.js": "./src/index.js",
+    "./constants.js": "./src/constants.js"
   },
   "dependencies": {
     "@noisytransfer/errors": "workspace:*"
   },
   "devDependencies": {
+    "@noisytransfer/errors": "workspace:*",
     "@noisytransfer/crypto": "workspace:*",
     "@noisytransfer/noisystream": "workspace:*",
     "@noisytransfer/transport": "workspace:*",
