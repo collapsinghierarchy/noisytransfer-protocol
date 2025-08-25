@@ -15,6 +15,13 @@
   "devDependencies": {
     "@yao-pkg/pkg": "^6.6.0"
   },
+  "optionalDependencies": {
+    "@roamhq/wrtc-linux-x64": "^0.9.0",
+    "@roamhq/wrtc-linux-arm64": "^0.9.0",
+    "@roamhq/wrtc-darwin-arm64": "^0.9.0",
+    "@roamhq/wrtc-darwin-x64": "^0.9.0",
+    "@roamhq/wrtc-win-x64": "^0.9.0"
+  },
   "scripts": {
     "build:bin:host": "pkg -C Brotli -t host -o dist/noisy .",
     "build:bin:linux": "pkg -C Brotli -t latest-linux-x64   -o dist/noisy-linux-x64   .",
