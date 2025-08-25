@@ -1,20 +1,27 @@
 # noisytransfer-protocol
-Currently WiP. Our target is this structure eventually:
+Experimental monorepo implementing the NoisyTransfer protocol in JavaScript.
 
+## Packages
+
+- `@noisytransfer/crypto` – cryptographic primitives (hashing, AEAD, HPKE, SAS).
+- `@noisytransfer/errors` – shared `NoisyError` class and error codes.
+- `@noisytransfer/noisyauth` – authentication handshake state machines.
+- `@noisytransfer/noisystream` – frame-based streaming helpers.
+- `@noisytransfer/noisycache` – caching and file transfer utilities.
+- `@noisytransfer/transport` – WebSocket/WebRTC transport wrappers.
+- `@noisytransfer/util` – internal utility helpers.
+- `@noisytransfer/noisytransfer-protocol` – umbrella package re-exporting the above.
+
+Each package lives under `packages/` and is versioned together.
+
+## Development
+
+Install dependencies with your preferred package manager and run tests:
+
+```sh
+npm install
+npm test
 ```
-noisytransfer/
-├─ package.json                # workspaces + dev scripts
-├─ pnpm-workspace.yaml         # or npm/yarn equivalent
-├─ packages/
-│  ├─ errors/                  # @noisy/errors   (NoisyError, mapping)
-│  ├─ util/                    # @noisy/util     (buffer/base64/serial/logger)
-│  ├─ crypto-core/             # @noisy/crypto-core (hash, commitment, SAS)
-│  ├─ crypto-aead/             # @noisy/crypto-aead (aead.js, deriveIv)
-│  ├─ crypto-handshake/        # @noisy/crypto-handshake (HPKE wrappers)
-│  ├─ transport-ws/            # @noisy/transport-ws (mailbox surface, ser.js)
-│  ├─ transport-rtc/           # @noisy/transport-rtc (initiator/responder/dc)
-│  ├─ noisyauth/               # @noisy/noisyauth (sender/receiver FSM)
-│  ├─ noisystream/             # @noisy/noisystream (frames + send/recv API)
-│  └─ noisycache/              # @noisy/noisycache (sender/receiver + keypacket)
-└─ tools/ & scripts/
-```
+
+Tests may require WebSocket/WebRTC shims for Node environments. APIs are
+unstable and may change without notice.
