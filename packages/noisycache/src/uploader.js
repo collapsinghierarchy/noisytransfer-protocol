@@ -2,7 +2,7 @@
 
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { makeManifest, aadFor } from './manifest.js';
-import { createSHA256, Readable } from '@noisytransfer/crypto/hash.js';
+import { createSHA256, Readable } from '@noisytransfer/crypto';
 
 function toAsyncIter(source, chunkBytes) {
   // Supports Buffer/Uint8Array, Blob (web), Readable/ReadableStream, or async iterator

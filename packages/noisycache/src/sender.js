@@ -1,9 +1,9 @@
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { suite } from '@noisytransfer/crypto';
+import { signChunk } from '@noisytransfer/crypto';
+import { b64u, unb64u } from '@noisytransfer/util/base64.js';
 import { createAuthSender } from '@noisytransfer/noisyauth/sender.js';
-import { suite } from '@noisytransfer/crypto/suite.js';
 import { buildKeyPacket } from './keypacket.js';
-import { signChunk } from '@noisytransfer/crypto/signature.js';
-import { unb64u } from '@noisytransfer/util/base64.js';
 import { makeCourierFrame } from './shared.js';
 
 /**
@@ -16,9 +16,6 @@ export function mkSendMsgWithVK(verificationKeyU8) {
   if (!(verificationKeyU8 instanceof Uint8Array)) {
     throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'mkSendMsgWithVK: expected Uint8Array' });
   }
-  const b64u = (buf) =>
-    btoa(String.fromCharCode(...new Uint8Array(buf)))
-      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/,"");
   const payload = JSON.stringify({ type: 'vk_v1', vk_b64u: b64u(verificationKeyU8) });
   return new TextEncoder().encode(payload);
 }

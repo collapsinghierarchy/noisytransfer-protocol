@@ -9,6 +9,24 @@ function join(base, path) {
   return `${base.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
 }
 
+function httpStatusToCode(status) {
+  switch (status) {
+    case 400: return 'NC_HTTP_400';
+    case 401: return 'NC_HTTP_401';
+    case 403: return 'NC_HTTP_403';
+    case 404: return 'NC_HTTP_404';
+    case 409: return 'NC_HTTP_409';
+    case 412: return 'NC_HTTP_412';
+    case 416: return 'NC_HTTP_416';
+    case 429: return 'NC_HTTP_429';
+    case 500: return 'NC_HTTP_500';
+    case 502: return 'NC_HTTP_502';
+    case 503: return 'NC_HTTP_503';
+    case 504: return 'NC_HTTP_504';
+    default:  return 'NC_HTTP';
+  }
+}
+
 export class HttpStore {
   /**
    * @param {string} base - e.g., "http://localhost:1234"
@@ -137,8 +155,8 @@ export class HttpStore {
       headers: { 'Range': `bytes=${start}-${end}`, 'Accept-Encoding': 'identity' },
       expect: 206,
     });
-    const ab = await res.arrayBuffer();
-    return { bytes: Buffer.from(ab), contentRange: res.headers.get('content-range') };
+   const ab = await res.arrayBuffer();
+   return { bytes: new Uint8Array(ab), contentRange: res.headers.get('content-range') };
   }
 
   async get({ objectId, signal }) {
@@ -149,6 +167,6 @@ export class HttpStore {
       expect: 200,
     });
     const ab = await res.arrayBuffer();
-    return Buffer.from(ab);
+    return new Uint8Array(ab);
   }
 }

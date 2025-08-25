@@ -1,8 +1,9 @@
 import { asU8, concat } from '@noisytransfer/util/buffer.js';
 import { u32be } from '@noisytransfer/util/serial.js';
-import { createHash as nodeCreateHash } from 'node:crypto';
+import { createHash as nodeCreateHash , webcrypto as nodeCrypto } from 'node:crypto';
 import { Readable } from 'node:stream';
 
+const cryptoImpl = globalThis.crypto ?? nodeCrypto;
 
 // Node helpers ---------------------------------------------------------------
 
@@ -18,7 +19,7 @@ export { Readable };
 export async function sha256(data) {
   const u = asU8(data);
   const view = u.buffer.slice(u.byteOffset, u.byteOffset + u.byteLength);
-  const hash = await crypto.subtle.digest('SHA-256', view);
+  const hash = await cryptoImpl.subtle.digest('SHA-256', view);
   return new Uint8Array(hash);
 }
 

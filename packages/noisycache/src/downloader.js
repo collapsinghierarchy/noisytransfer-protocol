@@ -1,8 +1,8 @@
 // Parallel Range download + per-chunk decrypt + final verification.
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 import { validateManifest, ctOffsetOfChunk, ctLenOfChunk, aadFor } from './manifest.js';
-import { createSHA256 } from '@noisytransfer/crypto/hash.js';
-import { createRSAVerifier } from '@noisytransfer/crypto/signature.js';
+import { createSHA256 } from '@noisytransfer/crypto';
+import { createRSAVerifier } from '@noisytransfer/crypto';
 
 export async function downloadAndDecrypt({
   storage,                // HttpStore

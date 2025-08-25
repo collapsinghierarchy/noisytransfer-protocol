@@ -13,7 +13,6 @@ import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 
 
 export function createAuthReceiver(tx, hooks = {}, opts = {}) {
-  console.log("receiver: Starting");
   const scope   = makeScope();
   const session = makeSessionCtx(tx, opts.session || opts);
   const T       = timeoutsFor(session.policy);
@@ -93,9 +92,7 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
   }
 
   
-  console.log("receiver: waiting for commit");
   if (session.policy === "rtc") {
-    console.log("receiver: waiting for RTC connection. Arming WAIT_COMMIT timer.");
     // Arm WAIT_COMMIT timer immediately if not already armed
     timer.arm(STATES.WAIT_COMMIT, "timeout_wait_commit");
   }
