@@ -12,10 +12,10 @@ import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
 import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';
 import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader.js';
 import { mailboxTransport as mkMailbox } from '@noisytransfer/transport';
-import { suite } from '@noisytransfer/crypto/suite.js';
-import { genRSAPSS } from '@noisytransfer/crypto/signature.js';
-import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache/courier.js';
-import { makeEncryptor, makeDecryptor } from "@noisytransfer/crypto/aead.js";
+import { suite } from '@noisytransfer/crypto';
+import { genRSAPSS } from '@noisytransfer/crypto';
+import { runCourierSender, runCourierReceiver, mkSendMsgWithVK } from '@noisytransfer/noisycache';
+import { makeEncryptor, makeDecryptor } from "@noisytransfer/crypto";
 
 const asU8 = (x) => (x instanceof Uint8Array ? x : new Uint8Array(x));
 

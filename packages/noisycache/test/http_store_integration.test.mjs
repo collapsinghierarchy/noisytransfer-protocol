@@ -45,7 +45,7 @@ test('http_store: create → upload → manifest → 409 → commit → ranges �
     context: { aead: 'AES-GCM', kdf: 'HKDF-SHA256', kem: 'X25519+Kyber768', chunkBytes: CHUNK, counterStart: 0 },
   };
   await store.putManifest({ manifestUrl, manifest });
-
+  console.log('manifest uploaded');
   // GET before commit → 409
   let got409 = false;
   try {

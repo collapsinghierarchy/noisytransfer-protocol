@@ -24,12 +24,12 @@ export async function runCourierReceiver({ tx, sessionId, recvMsg, recipientPriv
     const enc = unb64u(frame.enc);
     const ct  = unb64u(frame.ct);
     const sig = unb64u(frame.sig);
-
-    const ok = await verifyChunk(verifyKey, ct, sig);
+    // Decrypt first, then verify the signature over PLAINTEXT key-packet bytes
+    const ctx = await suite.createRecipientContext({ recipientKey: recipientPrivateKey, enc });
+    const pt  = await ctx.open(ct);
+    const ok  = await verifyChunk(verifyKey, sig, pt);
     if (!ok) throw new NoisyError({ code: 'NC_SIGNATURE_INVALID', message: 'invalid courier signature' });
 
-    const ctx = await suite.createRecipientContext({ recipientKey: recipientPrivateKey, enc: enc });
-    const pt  = await ctx.open(ct);
     const keyPacket = parseKeyPacket(pt);
     pending?.resolve({ keyPacket });
   }
@@ -60,9 +60,8 @@ export async function runCourierReceiver({ tx, sessionId, recvMsg, recipientPriv
           if (!vk_b64u) throw new NoisyError({ code: 'NC_COURIER_NO_MSGS', message: 'missing vk_b64u in msgS' });
           const vk = await importVerifyKey(unb64u(vk_b64u));
           verifyKey = vk;
-          // drain any early frames
+          // Drain any early frames (will resolve & unsubscribe in onMessage path)
           for (const f of backlog.splice(0)) await handleCourierFrame(f);
-          try { un?.(); } catch {}
         } catch (e) {
           try { un?.(); } catch {}
           reject(e instanceof NoisyError ? e : new NoisyError({ code: 'NC_AUTHCORE', message: 'authcore receiver error', cause: e }));

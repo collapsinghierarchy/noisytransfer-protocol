@@ -14,8 +14,8 @@ function httpStatusToCode(status) {
     case 400: return 'NC_HTTP_400';
     case 401: return 'NC_HTTP_401';
     case 403: return 'NC_HTTP_403';
-    case 404: return 'NC_HTTP_404';
-    case 409: return 'NC_HTTP_409';
+    case 404: return 'NC_NOT_FOUND';
+    case 409: return 'NC_NOT_COMMITTED';
     case 412: return 'NC_HTTP_412';
     case 416: return 'NC_HTTP_416';
     case 429: return 'NC_HTTP_429';
@@ -26,6 +26,9 @@ function httpStatusToCode(status) {
     default:  return 'NC_HTTP';
   }
 }
+
+// Return Buffer in Node (so your tests can use .equals), Uint8Array otherwise.
+const toBytes = (ab) => (typeof Buffer !== 'undefined' ? Buffer.from(ab) : new Uint8Array(ab));
 
 export class HttpStore {
   /**
@@ -73,18 +76,23 @@ export class HttpStore {
           await sleep(this.retryDelay * Math.pow(2, attempt - 1), signal);
           continue;
         }
-          throw fromUnknown(err, { where: 'http_store' });
+        throw err; // preserve domain code like NC_NOT_COMMITTED/NC_NOT_FOUND
       } catch (e) {
-        if (e?.name === 'AbortError') throw new NoisyError({ code: 'NC_ABORTED', message: 'fetch aborted', cause: e, retriable: true });
-        lastErr = e;
-        // Network-level error: retry
-        if (attempt < max - 1) {
-          attempt++;
-          await sleep(this.retryDelay * Math.pow(2, attempt - 1), signal);
-          continue;
-        }
-        if (e instanceof NoisyError)
-          throw new NoisyError({ code: 'NC_NETWORK', message: 'Network error', context: { url, method }, cause: e });
+      if (e?.name === 'AbortError') {
+        throw new NoisyError({ code: 'NC_ABORTED', message: 'fetch aborted', cause: e, retriable: true });
+      }
+      lastErr = e;
+      // Pass through domain errors (e.g., 404/409 mapping) unchanged — do not retry or wrap.
+      if (e instanceof NoisyError) {
+        throw e;
+      }
+      // Otherwise treat as network error: retry if possible, then wrap as NC_NETWORK.
+      if (attempt < max - 1) {
+        attempt++;
+        await sleep(this.retryDelay * Math.pow(2, attempt - 1), signal);
+        continue;
+      }
+      throw new NoisyError({ code: 'NC_NETWORK', message: 'Network error', context: { url, method }, cause: e, retriable: true }); 
       }
     }
    throw fromUnknown(lastErr, { where: 'http_store' });
@@ -156,7 +164,7 @@ export class HttpStore {
       expect: 206,
     });
    const ab = await res.arrayBuffer();
-   return { bytes: new Uint8Array(ab), contentRange: res.headers.get('content-range') };
+   return { bytes: toBytes(ab), contentRange: res.headers.get('content-range') };
   }
 
   async get({ objectId, signal }) {
@@ -167,6 +175,6 @@ export class HttpStore {
       expect: 200,
     });
     const ab = await res.arrayBuffer();
-    return new Uint8Array(ab);
+    return toBytes(ab);
   }
 }
