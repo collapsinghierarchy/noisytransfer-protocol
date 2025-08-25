@@ -12,7 +12,7 @@ globalThis.RTCIceCandidate       ??= wrtc.RTCIceCandidate;
 globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
 
 import WebSocket from "ws";
-globalThis.WebSocket = WebSocket;
+globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth";

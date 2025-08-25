@@ -6,7 +6,7 @@ import { webcrypto as wc, randomBytes } from 'node:crypto';
 globalThis.crypto ??= wc;
 
 import WebSocket from 'ws';
-globalThis.WebSocket = WebSocket;
+globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 import { mailboxTransport as mkMailbox } from '@noisytransfer/transport';
 import { suite } from '@noisytransfer/crypto';

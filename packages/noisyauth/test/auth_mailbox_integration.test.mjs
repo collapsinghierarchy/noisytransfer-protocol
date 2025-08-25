@@ -5,7 +5,7 @@ import { webcrypto } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 
 import WebSocket from "ws";
-globalThis.WebSocket = WebSocket;
+globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 import { mailboxTransport as mkMailbox } from "@noisytransfer/transport";
 import { createAuthSender } from "@noisytransfer/noisyauth/sender.js";

@@ -7,11 +7,14 @@ process.on('unhandledRejection', (reason, p) => {
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { webcrypto } from "node:crypto";
 import { setTimeout as delay } from 'node:timers/promises';
 import net from "node:net";
+import { webcrypto } from "node:crypto";
+globalThis.crypto ??= webcrypto;
+
 import wrtc from "@roamhq/wrtc";
-import WS from "ws";  // Renamed import to avoid conflict
+import WebSocket from "ws";
+globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 // Store original globals for restoration
 const originalGlobals = {
@@ -90,8 +93,8 @@ async function makeSignal(room, side) {
   const url = `ws://localhost:1234/ws?appID=${room}&side=${side}`;
   const wsTx = browserWSWithReconnect(url, { 
     maxRetries: 0,
-    // Use the imported WS directly
-    wsConstructor: WS
+    // Use the imported WebSocket directly
+    wsConstructor: WebSocket
   });
 
   const outQ = [];

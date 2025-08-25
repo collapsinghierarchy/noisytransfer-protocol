@@ -7,6 +7,12 @@
     "./*": "./src/*",
     ".": "./src/index.js"
   },
+  "scripts": {
+    "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
+  },
+  "devDependencies": {
+    "ws": "^8.18.0"
+  },
   "dependencies": {
     "@noisytransfer/crypto": "workspace:*",
     "@noisytransfer/errors": "workspace:*",

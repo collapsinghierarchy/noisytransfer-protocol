@@ -1,7 +1,17 @@
 {
   "name": "@noisytransfer/errors",
+  "version": "0.1.0",
   "type": "module",
   "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
+  },
   "exports": {
     ".": "./src/index.js",
     "./index.js": "./src/index.js",

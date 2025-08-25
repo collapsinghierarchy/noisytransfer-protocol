@@ -6,7 +6,7 @@ import { webcrypto as wc, randomBytes } from 'node:crypto';
 globalThis.crypto ??= wc;
 
 import WebSocket from 'ws';
-globalThis.WebSocket = WebSocket;
+globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
 import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';

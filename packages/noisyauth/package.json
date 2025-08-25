@@ -3,21 +3,37 @@
   "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
+  },
   "exports": {
     ".": "./src/index.js",
     "./index.js": "./src/index.js",
-    "./constants.js": "./src/constants.js"
+    "./constants.js": "./src/constants.js",
+    "./states.js": "./src/states.js"
   },
   "dependencies": {
-    "@noisytransfer/errors": "workspace:*"
+    "@noisytransfer/errors": "workspace:*",
+    "@roamhq/wrtc": "^0.9.0"
   },
   "devDependencies": {
-    "@noisytransfer/errors": "workspace:*",
     "@noisytransfer/crypto": "workspace:*",
     "@noisytransfer/noisystream": "workspace:*",
     "@noisytransfer/transport": "workspace:*",
     "@noisytransfer/util": "workspace:*",
-    "@roamhq/wrtc": "^0.9.0",
-    "ws": "^8.18.3"
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "@roamhq/wrtc-linux-x64": "^0.9.0",
+    "@roamhq/wrtc-linux-arm64": "^0.9.0",
+    "@roamhq/wrtc-darwin-arm64": "^0.9.0",
+    "@roamhq/wrtc-darwin-x64": "^0.9.0",
+    "@roamhq/wrtc-win-x64": "^0.9.0"
   }
 }

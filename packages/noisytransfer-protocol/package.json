@@ -7,6 +7,9 @@
     "./*": "./src/*",
     ".": "./src/index.js"
   },
+  "scripts": {
+    "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
+  },
   "dependencies": {
     "@noisytransfer/noisyauth": "workspace:*",
     "@noisytransfer/noisystream": "workspace:*",

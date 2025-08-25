@@ -1,16 +1,28 @@
 {
-  "name": "noisytransfer-js",
-  "version": "0.2.0",
   "private": true,
-  "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
-  "packageManager": "pnpm@10.15.0+sha512.486ebc259d3e999a4e8691ce03b5cac4a71cbeca39372a9b762cb500cfdf0873e2cb16abe3d951b1ee2cf012503f027b98b6584e4df22524e0c7450d9ec7aa7b",
+  "workspaces": ["packages/*"],
+  "packageManager": "bun@1.1.x",
   "scripts": {
-    "build": "pnpm -r --if-present run build",
-    "dev:broker": "node scripts/ws-broker.js",
-    "pkg:stage": "pnpm --filter @noisytransfer/noisy-cli deploy packages/noisy-cli/.pkg --prod",
-    "build:cli": "pnpm run pkg:stage && cd packages/noisy-cli/.pkg && pkg -C Brotli -t host -o ../dist/noisy ."
+    "build": "bun run -A turbo build || true",
+    "test": "node --test packages",
+    "test:util": "node --test packages/util",
+    "test:watch": "node --test --watch packages",
+    "test:spec": "node --test --test-reporter=spec packages"
+  },
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.1.0"
+  },
+  "dependencies": {
+    "@roamhq/wrtc-linux-x64": "^0.9.0"
+  },
+  "devDependencies": {
+    "@roamhq/wrtc": "^0.9.0"
+  },
+  "optionalDependencies": {
+    "@roamhq/wrtc-linux-x64": "^0.9.0",
+    "@roamhq/wrtc-linux-arm64": "^0.9.0",
+    "@roamhq/wrtc-darwin-arm64": "^0.9.0",
+    "@roamhq/wrtc-darwin-x64": "^0.9.0"
   }
 }
