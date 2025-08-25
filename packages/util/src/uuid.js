@@ -1,8 +1,13 @@
-import { randomFillSync } from 'node:crypto';
+import { randomFillSync, randomUUID as nodeRandomUUID } from 'node:crypto';
 
 export function makeUUID() {
-  if (typeof crypto?.randomUUID === 'function') {
-    return crypto.randomUUID();
+  // Prefer WebCrypto’s randomUUID if present (browsers / recent Node).
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  // Next, Node’s native randomUUID if available.
+  if (typeof nodeRandomUUID === 'function') {
+    return nodeRandomUUID();
   }
   const bytes = new Uint8Array(16);
   randomFillSync(bytes);

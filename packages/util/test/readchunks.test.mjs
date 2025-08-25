@@ -1,7 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readChunks } from '../src/readChunks.js';
-import { CHUNK_SIZE } from '@noisytransfer/noisytransfer-protocol/constants.js';
+import { readChunks, CHUNK_SIZE } from '../src/readChunks.js';
 
 test('readChunks splits blobs by CHUNK_SIZE', async () => {
   const total = CHUNK_SIZE * 2 + 10;
@@ -18,5 +17,5 @@ test('readChunks splits blobs by CHUNK_SIZE', async () => {
   // Concatenated chunks should equal original buffer
   const combined = Buffer.concat(chunks.map(c => Buffer.from(c)));
   assert.equal(combined.length, total);
-  assert.deepEqual(combined, buf);
+  assert.ok(combined.equals(Buffer.from(buf)));
 });
