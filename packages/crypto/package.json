@@ -54,5 +54,6 @@
     "websocket",
     "quantumsafe",
     "SAS"
-  ]
+  ],
+  "sideEffects": false
 }

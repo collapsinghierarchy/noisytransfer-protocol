@@ -38,5 +38,6 @@
     "streaming",
     "transport",
     "webrtc"
-  ]
+  ],
+  "sideEffects": false
 }

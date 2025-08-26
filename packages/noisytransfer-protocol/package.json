@@ -46,5 +46,9 @@
     "streaming",
     "transport",
     "webrtc"
-  ]
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false
 }
