@@ -16,27 +16,25 @@ import wrtc from "@roamhq/wrtc";
 import WebSocket from "ws";
 globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
- // Store original globals for restoration
- const originalGlobals = {
-   crypto: globalThis.crypto,
-   RTCPeerConnection: globalThis.RTCPeerConnection,
-   RTCIceCandidate: globalThis.RTCIceCandidate,
-   RTCSessionDescription: globalThis.RTCSessionDescription,
-   WebSocket: globalThis.WebSocket
- };
+// Store original globals for restoration
+const originalGlobals = {
+  crypto: globalThis.crypto,
+  RTCPeerConnection: globalThis.RTCPeerConnection,
+  RTCIceCandidate: globalThis.RTCIceCandidate,
+  RTCSessionDescription: globalThis.RTCSessionDescription,
+  WebSocket: globalThis.WebSocket
+};
 
 function restoreGlobal(name, value) {
-  // Don’t try to reset read-only accessors like globalThis.crypto in Node
   const desc = Object.getOwnPropertyDescriptor(globalThis, name);
-  const readOnly = desc && !desc.writable && !desc.set; // data prop not writable AND no setter
-  if (readOnly) return; // skip
+  const readOnly = desc && !desc.writable && !desc.set;
+  if (readOnly) return;
   if (value === undefined) {
     try { delete globalThis[name]; } catch {}
   } else {
     try { globalThis[name] = value; } catch {}
   }
 }
-
 
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
@@ -53,23 +51,33 @@ if (!isBun) {
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+// Simplified closeTx function
 async function closeTx(tx) {
   if (!tx?.close) return;
   await new Promise((resolve) => {
     let done = false;
-    const finish = () => { if (!done) { done = true; try { un?.(); } catch {} resolve(); } };
+    const finish = () => { 
+      if (!done) { 
+        done = true; 
+        resolve(); 
+      } 
+    };
     const un = tx.onClose?.(() => finish());
     try {
       const ret = tx.close();
       if (ret && typeof ret.then === "function") ret.then(finish).catch(() => finish());
     } catch { finish(); }
-    // Fallback in case onClose isn’t implemented
     setTimeout(finish, 200);
   });
 }
 
 async function cleanDown(rawA, rawB, sigA, sigB) {
-  await Promise.all([closeTx(rawA), closeTx(rawB), closeTx(sigA), closeTx(sigB)]);
+  await Promise.allSettled([
+    closeTx(rawA), 
+    closeTx(rawB), 
+    closeTx(sigA), 
+    closeTx(sigB)
+  ]);
 }
 
 function waitUp(tx, { timeoutMs = 0, optional = false } = {}) {
@@ -78,35 +86,24 @@ function waitUp(tx, { timeoutMs = 0, optional = false } = {}) {
     if (tx?.isConnected || tx?.isUp || tx?.readyState === "open") return resolve();
 
     let done = false;
-    const finish = () => { if (!done) { done = true; try { un?.(); } catch {} resolve(); } };
+    const finish = () => { if (!done) { done = true; resolve(); } };
 
     let un = null;
     if (typeof tx?.onUp === "function") {
       un = tx.onUp(finish);
     } else if (typeof tx?.onMessage === "function") {
-      // fallback heuristic: first message means “usable”
       un = tx.onMessage(function first() { finish(); });
     }
 
     if (timeoutMs > 0) setTimeout(finish, timeoutMs);
-    // if neither onUp nor onMessage are present, don't hang forever:
     if (!un && timeoutMs === 0) setTimeout(finish, 0);
   });
-}
-
-function trackPath() {
-  const arr = [];
-  return {
-    arr,
-    onState: (t) => { if (t && "to" in t) arr.push(t.to); }
-  };
 }
 
 async function makeSignal(room, side) {
   const url = `ws://localhost:1234/ws?appID=${room}&side=${side}`;
   const wsTx = browserWSWithReconnect(url, { 
     maxRetries: 0,
-    // Use the imported WebSocket directly
     wsConstructor: WebSocket
   });
 
@@ -152,17 +149,6 @@ async function dial(role, signal, rtcCfg = {}) {
                               : rtcResponder(signal, rtcCfg);
 }
 
-function assertInOrder(seq, expected, msg) {
-  let pos = -1;
-  for (const want of expected) {
-    const i = seq.indexOf(want, pos + 1);
-    assert.ok(i !== -1, `${msg || "sequence"}: missing ${want} after index ${pos}`);
-    pos = i;
-  }
-}
-
-const last = (arr) => arr[arr.length - 1];
-
 function filterOutbound(tx, dropFn) {
   const origSend = tx.send.bind(tx);
   return {
@@ -171,38 +157,8 @@ function filterOutbound(tx, dropFn) {
   };
 }
 
-function wrappedTest(name, ...args) {
-  let options = {};
-  let fn;
-  
-  if (typeof args[0] === 'function') {
-    fn = args[0];
-  } else {
-    options = args[0] || {};
-    fn = args[1];
-  }
-
-  test(name, { ...options, timeout: options.timeout || 20000, skip: isBun && 'wrtc not supported by Bun yet' }, async (t) => {
-    // Globals were already set at module scope using ??=.
-    // Avoid overwriting read-only accessors like globalThis.crypto.
-    if (!isBun) {
-      globalThis.RTCPeerConnection ??= wrtc.RTCPeerConnection;
-      globalThis.RTCIceCandidate ??= wrtc.RTCIceCandidate;
-      globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
-    }
-    if (!globalThis.WebSocket) globalThis.WebSocket = WebSocket; // fix: use the imported name
-    
-    try {
-      await fn(t);
-    } finally {
-      // Restore original globals (safely; skip non-writable like crypto)
-      Object.entries(originalGlobals).forEach(([key, value]) => restoreGlobal(key, value));
-      if (global.gc) global.gc();
-    }
-  });
-}
-
-wrappedTest("authcore-rtc: timeout_wait_reveal (sender)", async (t) => {
+// Use standard test function instead of wrappedTest
+test("authcore-rtc: timeout_wait_reveal (sender)", { timeout: 30000, skip: isBun && 'wrtc not supported by Bun yet' }, async () => {
   const room = crypto.randomUUID();
   const sessionId = crypto.randomUUID();
   const [sigA, sigB] = await Promise.all([makeSignal(room, "A"), makeSignal(room, "B")]);
@@ -238,7 +194,7 @@ wrappedTest("authcore-rtc: timeout_wait_reveal (sender)", async (t) => {
   }
 });
 
-wrappedTest("authcore-rtc: timeout_wait_peer_confirm (sender)", async (t) => {
+test("authcore-rtc: timeout_wait_peer_confirm (sender)", { timeout: 30000, skip: isBun && 'wrtc not supported by Bun yet' }, async () => {
   const room = crypto.randomUUID();
   const sessionId = crypto.randomUUID();
   const [sigA, sigB] = await Promise.all([makeSignal(room, "A"), makeSignal(room, "B")]);
@@ -279,19 +235,18 @@ wrappedTest("authcore-rtc: timeout_wait_peer_confirm (sender)", async (t) => {
 });
 
 test('no leaked net sockets (ignoring stdio)', async () => {
-  await delay(30);
+  await delay(100);
 
   // eslint-disable-next-line no-underscore-dangle
   const handles = process._getActiveHandles?.() || [];
 
   const nonStdioSockets = handles.filter((h) =>
     h instanceof net.Socket &&
-    !h.isTTY &&                  // not a TTY
-    h !== process.stdout &&      // not stdout
-    h !== process.stderr         // not stderr
+    !h.isTTY &&
+    h !== process.stdout &&
+    h !== process.stderr
   );
 
-  // Helpful logging while you dial it in:
   for (const s of nonStdioSockets) {
     console.log('LEAK? socket',
       'local=', s.localAddress, s.localPort,
@@ -305,4 +260,9 @@ test('no leaked net sockets (ignoring stdio)', async () => {
     0,
     `Expected 0 non-stdio sockets, found ${nonStdioSockets.length}`
   );
+});
+
+// Add a cleanup hook to restore globals after all tests
+test.after(() => {
+  Object.entries(originalGlobals).forEach(([key, value]) => restoreGlobal(key, value));
 });

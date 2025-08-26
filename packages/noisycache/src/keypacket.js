@@ -1,7 +1,7 @@
 // Minimal, strict KeyPacket builder/parser used by the mailbox courier.
 // JSON structure (bytes are base64url strings):
 // {
-//   type: 'nc_keypacket_v1',
+//   type: CACHE.KEYPACKET_TYPE,
 //   id: string,               // objectId
 //   fk_b64u: string,          // AES key bytes
 //   iv_b64u: string,          // 12-byte base IV
@@ -12,6 +12,8 @@
 // }
 
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { CACHE } from '@noisytransfer/constants';
+
 import { b64u, unb64u } from '@noisytransfer/util/base64.js';
 
 
@@ -21,7 +23,7 @@ export function buildKeyPacket({ id, fk, baseIV, chunkSize, totalSize, chunks, h
   const ivU8 = baseIV instanceof Uint8Array ? baseIV : new Uint8Array(baseIV);
   if (ivU8.length !== 12) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'baseIV must be 12 bytes' });
   const obj = {
-    type: 'nc_keypacket_v1',
+    type: CACHE.KEYPACKET_TYPE,
     id,
     fk_b64u: b64u(fkU8),
     iv_b64u: b64u(ivU8),
@@ -39,7 +41,7 @@ export function parseKeyPacket(bytes) {
   let obj;
   try { obj = JSON.parse(new TextDecoder().decode(u8)); }
   catch (e) { throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'invalid JSON', cause: e }); }
-  if (!obj || obj.type !== 'nc_keypacket_v1') throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'unexpected type' });
+  if (!obj || obj.type !== CACHE.KEYPACKET_TYPE) throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'unexpected type' });
   const { id, fk_b64u, iv_b64u, chunkSize, totalSize, chunks, hash } = obj;
   if (typeof id !== 'string' || !id) throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'missing id' });
   if (typeof fk_b64u !== 'string' || typeof iv_b64u !== 'string') throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'missing key/iv' });

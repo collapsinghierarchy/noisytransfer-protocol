@@ -1,4 +1,6 @@
 // src/crypto/stream.js
+
+import { STREAM } from '@noisytransfer/constants';
 import {
   createSenderSession,
   createReceiverSession,
@@ -53,7 +55,7 @@ export async function mkAeadStreamFromHpke(role, peerMaterial, ownPriv, opts = {
 
   // 3) Derive symmetric key & baseIV via exporter
   const LABEL = new TextEncoder().encode(
-    role === "sender" ? "noisy/stream/s2r/v1" : "noisy/stream/r2s/v1"
+    role === "sender" ? STREAM.LABEL_S2R : STREAM.LABEL_R2S
   );
   const KM_LEN = 32 + 12; // AES-256 key + 96-bit IV
   const km = await sess.exportSecret(LABEL, KM_LEN);

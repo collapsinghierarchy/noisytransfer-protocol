@@ -1,6 +1,8 @@
 // Streaming encrypt-and-upload for multi-GB files. Storage- and crypto-agnostic.
 
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { CACHE } from '@noisytransfer/constants';
+
 import { makeManifest, aadFor } from './manifest.js';
 import { createSHA256, Readable } from '@noisytransfer/crypto';
 
@@ -121,7 +123,7 @@ export async function uploadCiphertext({
     counterStart: encryptor.counterStart || 0,
     encTag,
     cipherDigest: cipherDigestHex,
-    finSigAlg: 'RSA-PSS-SHA256',
+    finSigAlg: CACHE.SIG_ALG,
     finSignature,
     context,
   });

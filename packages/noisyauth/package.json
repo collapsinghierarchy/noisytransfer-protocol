@@ -21,25 +21,30 @@
     "./receiver.js": "./src/receiver.js"
   },
   "dependencies": {
-    "@noisytransfer/errors": "workspace:*",
-    "@roamhq/wrtc": "^0.9.0"
+    "@noisytransfer/errors": "^0.2.0",
+    "@noisytransfer/crypto": "^0.2.0",
+    "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0"
   },
   "devDependencies": {
-    "@noisytransfer/crypto": "workspace:*",
-    "@noisytransfer/noisystream": "workspace:*",
-    "@noisytransfer/transport": "workspace:*",
-    "@noisytransfer/util": "workspace:*",
-    "ws": "^8.18.0"
+    "@noisytransfer/crypto": "^0.2.0",
+    "@noisytransfer/noisystream": "^0.2.0",
+    "@noisytransfer/transport": "^0.2.0",
+    "@noisytransfer/util": "^0.2.0",
+    "ws": "^8.18.0",
+    "@roamhq/wrtc": "^0.9.0"
   },
-  "optionalDependencies": {
-    "@roamhq/wrtc-linux-x64": "^0.9.0",
-    "@roamhq/wrtc-linux-arm64": "^0.9.0",
-    "@roamhq/wrtc-darwin-arm64": "^0.9.0",
-    "@roamhq/wrtc-darwin-x64": "^0.9.0",
-    "@roamhq/wrtc-win-x64": "^0.9.0"
-  },
+  "optionalDependencies": {},
   "license": "AGPL-3.0-only",
   "publishConfig": {
     "access": "public"
+  },
+  "peerDependencies": {
+    "@roamhq/wrtc": "^0.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@roamhq/wrtc": {
+      "optional": true
+    }
   }
 }

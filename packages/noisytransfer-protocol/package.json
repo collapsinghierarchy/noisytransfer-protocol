@@ -11,13 +11,12 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "dependencies": {
-    "@noisytransfer/noisyauth": "workspace:*",
-    "@noisytransfer/noisystream": "workspace:*",
-    "@noisytransfer/noisycache": "workspace:*",
-    "@noisytransfer/crypto": "workspace:*",
-    "@noisytransfer/errors": "workspace:*",
-    "@noisytransfer/transport": "workspace:*",
-    "@noisytransfer/util": "workspace:*"
+    "@noisytransfer/noisyauth": "^0.2.0",
+    "@noisytransfer/noisystream": "^0.2.0",
+    "@noisytransfer/noisycache": "^0.2.0",
+    "@noisytransfer/crypto": "^0.2.0",
+    "@noisytransfer/errors": "^0.2.0",
+    "@noisytransfer/transport": "^0.2.0"
   },
   "license": "AGPL-3.0-only",
   "publishConfig": {
@@ -25,5 +24,9 @@
   },
   "files": [
     "src"
-  ]
+  ],
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "peerDependencies": {},
+  "peerDependenciesMeta": {}
 }

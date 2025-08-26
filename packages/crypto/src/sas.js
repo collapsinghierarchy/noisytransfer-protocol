@@ -1,5 +1,5 @@
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
-import { PROTO_LABEL } from '@noisytransfer/noisyauth/constants.js';
+import { PROTO_LABEL } from '@noisytransfer/constants';
 import { unb64u } from '@noisytransfer/util/base64.js';
 import { asU8, concat, lpConcat } from '@noisytransfer/util/buffer.js';
 import * as hash from './hash.js';

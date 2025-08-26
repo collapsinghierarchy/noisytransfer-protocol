@@ -2,6 +2,8 @@
 
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
 
+import { CACHE } from '@noisytransfer/constants';
+
 export function be32(n) {
   const b = new Uint8Array(4);
   const dv = new DataView(b.buffer);
@@ -55,7 +57,7 @@ export function ctOffsetOfChunk(i, m) {
   return i * (m.chunkBytes + m.tagBytes);
 }
 
-export function makeManifest({ aead = 'AES-GCM', tagBytes = 16, chunkBytes, totalBytes, counterStart = 0, context = {}, encTag = '', cipherDigest = '', finSigAlg = 'RSA-PSS-SHA256', finSignature = '' }) {
+export function makeManifest({ aead = 'AES-GCM', tagBytes = 16, chunkBytes, totalBytes, counterStart = 0, context = {}, encTag = '', cipherDigest = '', finSigAlg = CACHE.SIG_ALG, finSignature = '' }) {
   if (!Number.isInteger(chunkBytes) || chunkBytes <= 0) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'chunkBytes must be positive int' });
   if (!Number.isInteger(totalBytes) || totalBytes < 0) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'totalBytes must be >= 0' });
   const totalChunks = totalBytes === 0 ? 0 : Math.ceil(totalBytes / chunkBytes);

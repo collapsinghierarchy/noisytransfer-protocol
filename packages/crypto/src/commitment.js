@@ -1,4 +1,6 @@
 import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { CRYPTO } from '@noisytransfer/constants';
+
 import { asU8, concat } from '@noisytransfer/util/buffer.js';
 import { u32be } from '@noisytransfer/util/serial.js';
 import { b64u, unb64u } from '@noisytransfer/util/base64.js';
@@ -7,7 +9,7 @@ import { sha256, sha3_256, constantTimeEqual } from './hash.js';
 const enc = new TextEncoder();
 
 // Domain separation label; keep stable across versions
-const DS_PREFIX = 'NOISY-COMMIT\0v1';
+const DS_PREFIX = CRYPTO.COMMIT_DS_PREFIX;
 
 /** Select hasher by name; add new algs here */
 function getHasher(name = 'SHA3-256') {

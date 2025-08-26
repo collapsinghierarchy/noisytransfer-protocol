@@ -1,0 +1,25 @@
+{
+  "name": "@noisytransfer/constants",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "exports": {
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@noisytransfer/constants": "^0.2.0"
+  }
+}
