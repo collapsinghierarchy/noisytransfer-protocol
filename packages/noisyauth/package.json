@@ -16,7 +16,9 @@
     ".": "./src/index.js",
     "./index.js": "./src/index.js",
     "./constants.js": "./src/constants.js",
-    "./states.js": "./src/states.js"
+    "./states.js": "./src/states.js",
+    "./sender.js": "./src/sender.js",
+    "./receiver.js": "./src/receiver.js"
   },
   "dependencies": {
     "@noisytransfer/errors": "workspace:*",
@@ -35,5 +37,9 @@
     "@roamhq/wrtc-darwin-arm64": "^0.9.0",
     "@roamhq/wrtc-darwin-x64": "^0.9.0",
     "@roamhq/wrtc-win-x64": "^0.9.0"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
   }
 }

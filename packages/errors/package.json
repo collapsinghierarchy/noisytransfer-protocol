@@ -16,5 +16,9 @@
     ".": "./src/index.js",
     "./index.js": "./src/index.js",
     "./noisy-error.js": "./src/noisy-error.js"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
   }
 }

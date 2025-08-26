@@ -18,5 +18,9 @@
     "@noisytransfer/errors": "workspace:*",
     "@noisytransfer/transport": "workspace:*",
     "@noisytransfer/util": "workspace:*"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
   }
 }

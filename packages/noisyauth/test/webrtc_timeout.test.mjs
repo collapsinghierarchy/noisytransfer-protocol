@@ -9,7 +9,7 @@ process.on('unhandledRejection', (reason, p) => {
 console.log("Test file loaded");
 
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test, after } from "node:test";
 import { webcrypto } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 
@@ -74,6 +74,9 @@ async function genSenderVerifyKey() {
 }
 async function closeTx(tx) {
   if (!tx?.close) return;
+  // Best-effort: ensure underlying PeerConnection is closed
+  try { tx.pc?.close?.(); } catch {}
+  try { tx.dc?.close?.(); } catch {}
   await new Promise((resolve) => {
     let done = false;
     const finish = () => { if (!done) { done = true; try { un?.(); } catch {} resolve(); } };
@@ -177,4 +180,13 @@ test("webrtc timeout suite (isolated)", { timeout: 30000, skip: isBun && "wrtc n
       await cleanDown(rawA0, rawB, sigA, sigB);
     }
   });
+});
+
+// Ensure native resources are torn down after all tests
+after(async () => {
+  // give any pending microtasks a chance to run
+  await new Promise((r) => setTimeout(r, 0));
+  try { wrtc?.close?.(); } catch {}
+  // optional: help finalizers run before process exit
+  if (global.gc) { try { global.gc(); } catch {} }
 });

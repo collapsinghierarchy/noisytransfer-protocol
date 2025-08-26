@@ -16,14 +16,27 @@ import wrtc from "@roamhq/wrtc";
 import WebSocket from "ws";
 globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
-// Store original globals for restoration
-const originalGlobals = {
-  crypto: globalThis.crypto,
-  RTCPeerConnection: globalThis.RTCPeerConnection,
-  RTCIceCandidate: globalThis.RTCIceCandidate,
-  RTCSessionDescription: globalThis.RTCSessionDescription,
-  WebSocket: globalThis.WebSocket
-};
+ // Store original globals for restoration
+ const originalGlobals = {
+   crypto: globalThis.crypto,
+   RTCPeerConnection: globalThis.RTCPeerConnection,
+   RTCIceCandidate: globalThis.RTCIceCandidate,
+   RTCSessionDescription: globalThis.RTCSessionDescription,
+   WebSocket: globalThis.WebSocket
+ };
+
+function restoreGlobal(name, value) {
+  // Don’t try to reset read-only accessors like globalThis.crypto in Node
+  const desc = Object.getOwnPropertyDescriptor(globalThis, name);
+  const readOnly = desc && !desc.writable && !desc.set; // data prop not writable AND no setter
+  if (readOnly) return; // skip
+  if (value === undefined) {
+    try { delete globalThis[name]; } catch {}
+  } else {
+    try { globalThis[name] = value; } catch {}
+  }
+}
+
 
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
@@ -170,24 +183,20 @@ function wrappedTest(name, ...args) {
   }
 
   test(name, { ...options, timeout: options.timeout || 20000, skip: isBun && 'wrtc not supported by Bun yet' }, async (t) => {
-    // Set all required globals for the test
-    globalThis.crypto = webcrypto;
-    globalThis.RTCPeerConnection = wrtc.RTCPeerConnection;
-    globalThis.RTCIceCandidate = wrtc.RTCIceCandidate;
-    globalThis.RTCSessionDescription = wrtc.RTCSessionDescription;
-    globalThis.WebSocket = WS;  // Set global WebSocket
+    // Globals were already set at module scope using ??=.
+    // Avoid overwriting read-only accessors like globalThis.crypto.
+    if (!isBun) {
+      globalThis.RTCPeerConnection ??= wrtc.RTCPeerConnection;
+      globalThis.RTCIceCandidate ??= wrtc.RTCIceCandidate;
+      globalThis.RTCSessionDescription ??= wrtc.RTCSessionDescription;
+    }
+    if (!globalThis.WebSocket) globalThis.WebSocket = WebSocket; // fix: use the imported name
     
     try {
       await fn(t);
     } finally {
-      // Restore original globals
-      Object.entries(originalGlobals).forEach(([key, value]) => {
-        if (value === undefined) {
-          delete globalThis[key];
-        } else {
-          globalThis[key] = value;
-        }
-      });
+      // Restore original globals (safely; skip non-writable like crypto)
+      Object.entries(originalGlobals).forEach(([key, value]) => restoreGlobal(key, value));
       if (global.gc) global.gc();
     }
   });

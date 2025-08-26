@@ -1,7 +1,7 @@
 {
   "private": true,
   "workspaces": ["packages/*"],
-  "packageManager": "bun@1.1.x",
+  "packageManager": "npm@10",
   "scripts": {
     "build": "bun run -A turbo build || true",
     "test": "node --test packages",
