@@ -21,5 +21,23 @@
   },
   "dependencies": {
     "@noisytransfer/constants": "^0.2.0"
-  }
+  },
+  "description": "NoisyTransfer constants (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/constants"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ]
 }

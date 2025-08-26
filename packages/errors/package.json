@@ -20,5 +20,23 @@
   "license": "AGPL-3.0-only",
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "description": "NoisyTransfer errors (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/errors"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ]
 }

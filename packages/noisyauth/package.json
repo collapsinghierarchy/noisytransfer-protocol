@@ -46,5 +46,23 @@
     "@roamhq/wrtc": {
       "optional": true
     }
-  }
+  },
+  "description": "NoisyTransfer noisyauth (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/noisyauth"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ]
 }

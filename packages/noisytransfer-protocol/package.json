@@ -28,5 +28,23 @@
   "devDependencies": {},
   "optionalDependencies": {},
   "peerDependencies": {},
-  "peerDependenciesMeta": {}
+  "peerDependenciesMeta": {},
+  "description": "NoisyTransfer noisytransfer-protocol (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/noisytransfer-protocol"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ]
 }
