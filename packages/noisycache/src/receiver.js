@@ -1,9 +1,10 @@
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
-import { parseKeyPacket } from './keypacket.js';
-import { createAuthReceiver } from '@noisytransfer/noisyauth/receiver';
 import { suite } from '@noisytransfer/crypto';
 import { importVerifyKey, verifyChunk } from '@noisytransfer/crypto';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
+import { createAuthReceiver } from '@noisytransfer/noisyauth/receiver';
 import { unb64u } from '@noisytransfer/util/base64';
+
+import { parseKeyPacket } from './keypacket.js';
 import { FRAME_TYPE, isCourierFrame } from './shared.js';
 
 /**

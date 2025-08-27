@@ -1,10 +1,11 @@
 // Streaming encrypt-and-upload for multi-GB files. Storage- and crypto-agnostic.
 
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { CACHE } from '@noisytransfer/constants';
+import { createSHA256, Readable } from '@noisytransfer/crypto';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 
 import { makeManifest, aadFor } from './manifest.js';
-import { createSHA256, Readable } from '@noisytransfer/crypto';
+
 
 function toAsyncIter(source, chunkBytes) {
   // Supports Buffer/Uint8Array, Blob (web), Readable/ReadableStream, or async iterator
@@ -59,7 +60,6 @@ export async function uploadCiphertext({
   const sha = createSHA256();
 
   let totalPt = 0, totalCt = 0, seq = 0;
-  let firstChunk = true;
   let lastChunkPlaintextBytes = 0;
 
   async function* ctGenerator() {
@@ -80,7 +80,6 @@ export async function uploadCiphertext({
       if (onProgress) onProgress({ seq, ptBytes: ptU8.length, ctBytes: ct.length, sentBytes: totalCt });
       yield ct;
       seq++;
-      firstChunk = false;
     }
   }
 
@@ -120,6 +119,8 @@ export async function uploadCiphertext({
     tagBytes: encryptor.tagBytes,
     chunkBytes,
     totalBytes: totalPt,
+    totalChunks,
+    lastChunkPlaintextBytes,
     counterStart: encryptor.counterStart || 0,
     encTag,
     cipherDigest: cipherDigestHex,

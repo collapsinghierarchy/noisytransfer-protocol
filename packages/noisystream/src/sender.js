@@ -1,6 +1,6 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { logger } from "@noisytransfer/util/logger";
 import { asU8, isByteLike } from "@noisytransfer/util/buffer";
+import { logger } from "@noisytransfer/util/logger";
 
 import {
   STREAM,

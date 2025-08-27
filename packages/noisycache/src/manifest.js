@@ -1,8 +1,8 @@
 // Helpers for manifest math + validation.
 
+import { CACHE } from '@noisytransfer/constants';
 import { NoisyError } from '@noisytransfer/errors/noisy-error';
 
-import { CACHE } from '@noisytransfer/constants';
 
 export function be32(n) {
   const b = new Uint8Array(4);

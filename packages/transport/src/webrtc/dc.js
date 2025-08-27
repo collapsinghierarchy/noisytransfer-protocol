@@ -1,6 +1,12 @@
-import { binReplacer, binReviver } from "../ser.js";
 import { asU8, isByteLike } from "@noisytransfer/util/buffer";
-import { addEvt, pickPreferredFingerprintFromSdp, hardCloseRTC } from "./rtc-utils.js";
+
+import { binReplacer, binReviver } from "../ser.js";
+import {
+  addEvt,
+  pickPreferredFingerprintFromSdp,
+  parseDtlsFingerprintsFromSdp,
+  hardCloseRTC,
+} from "./rtc-utils.js";
 
 /** Resolve when the DataChannel TX buffer is empty. */
 export function waitForDrain(dc) {

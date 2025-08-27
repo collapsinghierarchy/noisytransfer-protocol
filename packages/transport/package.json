@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@noisytransfer/errors": "^0.2.0",
-    "@noisytransfer/util": "^0.2.0"
+    "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0"
   },
   "devDependencies": {},
   "optionalDependencies": {},

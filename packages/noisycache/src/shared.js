@@ -1,6 +1,6 @@
+import { CACHE } from '@noisytransfer/constants';
 import { b64u } from '@noisytransfer/util/base64';
 
-import { CACHE } from '@noisytransfer/constants';
 
 // Shared constants and helpers for the noisycache courier.
 export const FRAME_TYPE = CACHE.FRAME_TYPE;

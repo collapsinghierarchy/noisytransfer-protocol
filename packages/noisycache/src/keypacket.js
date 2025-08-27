@@ -11,9 +11,8 @@
 //   hash: string              // hex SHA-256 of ciphertext transcript
 // }
 
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { CACHE } from '@noisytransfer/constants';
-
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { b64u, unb64u } from '@noisytransfer/util/base64';
 
 

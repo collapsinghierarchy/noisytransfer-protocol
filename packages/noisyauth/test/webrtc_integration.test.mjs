@@ -237,7 +237,7 @@ test("authcore-rtc: timeout_wait_peer_confirm (sender)", { timeout: 30000, skip:
 test('no leaked net sockets (ignoring stdio)', async () => {
   await delay(100);
 
-  // eslint-disable-next-line no-underscore-dangle
+   
   const handles = process._getActiveHandles?.() || [];
 
   const nonStdioSockets = handles.filter((h) =>

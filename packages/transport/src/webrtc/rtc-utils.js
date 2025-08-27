@@ -1,5 +1,8 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
 
+import { rtcInitiator } from "./initiator.js";
+import { rtcResponder } from "./responder.js";
+
 export function addEvt(target, type, cb) {
   target.addEventListener(type, cb);
   return () => target.removeEventListener(type, cb);

@@ -1,7 +1,8 @@
-import { suite } from "./suite.js";
-import { withTimeout } from "@noisytransfer/util/async";
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { withTimeout } from "@noisytransfer/util/async";
 import { asU8 } from "@noisytransfer/util/buffer";
+
+import { suite } from "./suite.js";
 
 /** Normalize to a tight Uint8Array view (no offset/length surprises). */
 function toU8(input) {

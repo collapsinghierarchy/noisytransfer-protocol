@@ -1,4 +1,4 @@
-import {BINARY_FIELDS} from "@noisytransfer/constants"
+import { BINARY_FIELDS } from "@noisytransfer/constants"
 
 const HAS_BUFFER = typeof Buffer !== "undefined" && typeof Buffer.from === "function";
 

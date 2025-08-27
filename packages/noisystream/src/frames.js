@@ -1,6 +1,6 @@
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { b64u, unb64u } from "@noisytransfer/util/base64";
 import { asU8 } from "@noisytransfer/util/buffer";
-import { NoisyError } from "@noisytransfer/errors/noisy-error";
 
 /** @typedef {'ns_init'|'ns_ready'|'ns_data'|'ns_fin'} StreamFrameType */
 

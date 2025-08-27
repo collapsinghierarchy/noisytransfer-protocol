@@ -1,16 +1,16 @@
 // src/crypto/stream.js
 
 import { STREAM } from '@noisytransfer/constants';
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { withTimeout } from "@noisytransfer/util/async";
+import { b64u } from "@noisytransfer/util/base64";
+import { asU8 } from "@noisytransfer/util/buffer";
+
+import { makeEncryptor, makeDecryptor } from "./aead.js";
 import {
   createSenderSession,
   createReceiverSession,
 } from "./handshake.js";
-
-import { withTimeout } from "@noisytransfer/util/async";
-import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { asU8 } from "@noisytransfer/util/buffer";
-import { b64u } from "@noisytransfer/util/base64";
-import { makeEncryptor, makeDecryptor } from "./aead.js";
 
 /**
  * Build a symmetric stream context derived from HPKE via the **exporter**.

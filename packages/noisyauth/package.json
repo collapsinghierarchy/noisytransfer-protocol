@@ -42,6 +42,7 @@
     "@noisytransfer/noisystream": "^0.2.0",
     "@noisytransfer/transport": "^0.2.0",
     "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0",
     "ws": "^8.18.0",
     "@roamhq/wrtc": "^0.9.0"
   },

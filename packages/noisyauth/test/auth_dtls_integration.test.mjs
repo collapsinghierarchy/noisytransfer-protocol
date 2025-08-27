@@ -45,34 +45,6 @@ async function sha256Hex(u8) {
   return Buffer.from(d).toString("hex");
 }
 
-// Gracefully close a PeerConnection (+ optional DataChannel) and detach handlers.
-// Safe to call multiple times.
-export async function hardCloseRTC(pc, { dc, timeout = 300 } = {}) {
-  try {
-    // Detach all handlers first to avoid retriggers
-    if (pc) {
-      pc.onicecandidate = null;
-      pc.oniceconnectionstatechange = null;
-      pc.onconnectionstatechange = null;
-      pc.onsignalingstatechange = null;
-      pc.ondatachannel = null;
-    }
-    if (dc) {
-      try {
-        dc.onopen = dc.onmessage = dc.onclose = dc.onerror = null;
-        if (dc.readyState !== "closed") dc.close();
-      } catch {}
-    }
-    // Stop any tracks/transceivers (we don’t create tracks, but harmless)
-    try { pc?.getSenders?.().forEach(s => s.track && s.track.stop && s.track.stop()); } catch {}
-    try { pc?.getTransceivers?.().forEach(t => t.stop && t.stop()); } catch {}
-    // Close the PC
-    try { pc?.close?.(); } catch {}
-
-    // Wait a tick for wrtc to release timers/sockets
-    await new Promise(r => setTimeout(r, timeout));
-  } catch {}
-}
 
 
 /* ------------------------ signaling over your backend ------------------------ */

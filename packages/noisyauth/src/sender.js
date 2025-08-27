@@ -1,18 +1,19 @@
 /**
  * noisyauth: Short Authentication String (SAS) based authentication (3-way non-blocking SAS log/reveal).
  */
-import { makeScope } from "./lifecycle.js";
-import { makeSessionCtx } from "./session.js";
-import { timeoutsFor } from "./timeouts.js";
-import { makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
 import { computeSASFromFrames } from "@noisytransfer/crypto";
-import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { verifyCommitment } from "@noisytransfer/crypto";
-import { STATES } from "./states.js";
-import { SenderFsm } from "./sender_fsm.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { unb64 } from "@noisytransfer/util";
+
 import { attachTransportLifecycle } from "./connectivity.js";
+import { makeScope } from "./lifecycle.js";
+import { makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
 import { makePhaseTimer } from "./phase_timer.js";
+import { SenderFsm } from "./sender_fsm.js";
+import { makeSessionCtx } from "./session.js";
+import { STATES } from "./states.js";
+import { timeoutsFor } from "./timeouts.js";
 
 export function createAuthSender(tx, hooks = {}, opts = {}) {
   const scope   = makeScope();

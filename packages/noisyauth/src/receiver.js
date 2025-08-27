@@ -1,15 +1,18 @@
-import { makeScope } from "./lifecycle.js";
-import { makeSessionCtx } from "./session.js";
-import { timeoutsFor } from "./timeouts.js";
-import { makeCommit, makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
 import { computeCommitment } from "@noisytransfer/crypto";
 import { computeSASFromFrames } from "@noisytransfer/crypto";
-import { STATES } from "./states.js";
-import { ReceiverFsm } from "./receiver_fsm.js";
-import { unb64 } from "@noisytransfer/util/base64";
-import { attachTransportLifecycle } from "./connectivity.js";
-import { makePhaseTimer } from "./phase_timer.js";
 import { NoisyError } from '@noisytransfer/errors/noisy-error';
+import { unb64 } from "@noisytransfer/util/base64";
+
+import { attachTransportLifecycle } from "./connectivity.js";
+import { makeScope } from "./lifecycle.js";
+import { makeCommit, makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
+import { makePhaseTimer } from "./phase_timer.js";
+import { ReceiverFsm } from "./receiver_fsm.js";
+import { makeSessionCtx } from "./session.js";
+import { STATES } from "./states.js";
+import { timeoutsFor } from "./timeouts.js";
+
+
 
 
 export function createAuthReceiver(tx, hooks = {}, opts = {}) {
@@ -91,9 +94,10 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
     }
   }
 
-  
+  let ASYNC = false;
   if (session.policy === "rtc") {
     // Arm WAIT_COMMIT timer immediately if not already armed
+    ASYNC = true;
     timer.arm(STATES.WAIT_COMMIT, "timeout_wait_commit");
   }
   

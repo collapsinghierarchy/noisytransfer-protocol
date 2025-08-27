@@ -1,24 +1,13 @@
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { PROTO_LABEL } from '@noisytransfer/constants';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { unb64u } from '@noisytransfer/util/base64';
-import { asU8, concat, lpConcat } from '@noisytransfer/util/buffer';
-import * as hash from './hash.js';
+import { lpConcat } from '@noisytransfer/util/buffer';
 import { logger } from '@noisytransfer/util/logger';
+
+import * as hash from './hash.js';
 
 
 let { sha3_256, shake128, toHex } = hash;
-
-// Lazy SHA3/SHAKE loader (works in Node & browsers)
-async function ensureSHA3() {
-  if (sha3_256 && shake128) return;
-  try {
-    const m = await import('@noble/hashes/sha3');
-    sha3_256 = m.sha3_256;
-    shake128 = m.shake128;
-  } catch {
-    logger.warn('SAS: @noble/hashes not found; falling back to SHA-256'); 
-  }
-}
 
 const enc = new TextEncoder();
 
