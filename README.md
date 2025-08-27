@@ -19,7 +19,7 @@ Each package lives under `packages/` and is versioned together.
 Install dependencies with your preferred package manager and run tests:
 
 ```sh
-bun install
+npm install
 npm test
 ```
 
