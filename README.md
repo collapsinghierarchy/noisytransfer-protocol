@@ -4,7 +4,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@whitenoisesystems/errors?style=flat-square)](https://www.npmjs.com/settings/noisytransfer/packages)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](./LICENSE)
 
-> Experimental monorepo of cryptographic WebRTC transport primitives.
+> Experimental monorepo of cryptographic WebRTC and websocket transport primitives.
 
 
 ## Packages
