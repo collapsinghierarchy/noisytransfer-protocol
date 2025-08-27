@@ -1,5 +1,5 @@
-import { suite } from "@noisytransfer/crypto/suite.js";
-import { genRSAPSS } from "@noisytransfer/crypto/signature.js";
+import { suite } from "@noisytransfer/crypto/suite";
+import { genRSAPSS } from "@noisytransfer/crypto/signature";
 
 export async function makeSenderSigningKeys() {
   return genRSAPSS(); // { verificationKey: Uint8Array, signingKey: CryptoKey }

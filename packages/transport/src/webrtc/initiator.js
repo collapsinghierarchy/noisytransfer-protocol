@@ -1,8 +1,8 @@
 import { shouldAcceptCandidate } from "./rtc-utils.js";
 import { wrapDataChannel } from "./dc.js";
 import { isTransport } from "../core.js";
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
-import { logger } from "@noisytransfer/util/logger.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { logger } from "@noisytransfer/util/logger";
 
 // Note: JSON (de)serialiser used inside wrapDataChannel via common.js
 
@@ -96,6 +96,7 @@ export function rtcInitiator(signal, rtcCfg = { iceServers: [] }) {
     });
 
     dc.addEventListener("close", () => {
+      try { clearTimeout(iceTimer); } catch {}
       try { unsubSignal?.(); } catch {}
       pc.onicecandidate = null;
     });

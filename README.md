@@ -23,7 +23,7 @@ bun install
 npm test
 ```
 
-For the tests you will need a running backend e.g. [noisytransfer back-end](https://github.com/collapsinghierarchy/noisytransfer).
+For the tests you will need a running localhost backend e.g. [noisytransfer back-end](https://github.com/collapsinghierarchy/noisytransfer).
 
 > APIs are unstable and may change without notice.
 

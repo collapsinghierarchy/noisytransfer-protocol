@@ -1,4 +1,4 @@
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { binReplacer, binReviver } from "../ser.js";
 
 export function browserWSWithReconnect(

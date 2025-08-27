@@ -22,5 +22,21 @@ export const CACHE = {
   SIG_ALG: "RSA-PSS-SHA256",
 };
 
+export const BINARY_FIELDS = new Set([
+  "nonceA","nonceB","vk","pkB","enc","ct","sig","commitment"
+]);
+
 // Convenience re-export (legacy)
 export const PROTO_LABEL = AUTH.PROTO_LABEL;
+
+// ---- Migrated from @noisytransfer/constants on 2025-08-27 ----
+export const FRAME = {
+  COMMIT: "commit",
+  OFFER: "offer",
+  REVEAL: "reveal",
+  RCVCONFIRM: "rcvconfirm",
+};
+export const ID_KIND = {
+  CERT: "cert",
+  PUBKEY: "pubkey",
+};

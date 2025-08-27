@@ -4,8 +4,19 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    "./*": "./src/*",
-    ".": "./src/index.js"
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./downloader": {
+      "import": "./src/downloader.js"
+    },
+    "./http_store": {
+      "import": "./src/http_store.js"
+    },
+    "./uploader": {
+      "import": "./src/uploader.js"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"

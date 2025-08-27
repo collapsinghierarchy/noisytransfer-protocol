@@ -1,5 +1,5 @@
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
-import { logger } from "@noisytransfer/util/logger.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { logger } from "@noisytransfer/util/logger";
 import {
   STREAM,
   parseStreamInit,

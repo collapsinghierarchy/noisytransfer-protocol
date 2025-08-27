@@ -13,8 +13,11 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js"
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./webrtc/rtc-utils": { "import": "./src/webrtc/rtc-utils.js" },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@noisytransfer/errors": "^0.2.0",

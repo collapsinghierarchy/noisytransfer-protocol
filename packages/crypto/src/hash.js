@@ -1,5 +1,5 @@
-import { asU8, concat } from '@noisytransfer/util/buffer.js';
-import { u32be } from '@noisytransfer/util/serial.js';
+import { asU8, concat } from '@noisytransfer/util/buffer';
+import { u32be } from '@noisytransfer/util/serial';
 import { createHash as nodeCreateHash , webcrypto as nodeCrypto } from 'node:crypto';
 import { Readable } from 'node:stream';
 

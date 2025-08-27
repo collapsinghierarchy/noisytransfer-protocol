@@ -8,8 +8,8 @@ import WebSocket from "ws";
 globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 import { mailboxTransport as mkMailbox } from "@noisytransfer/transport";
-import { createAuthSender } from "@noisytransfer/noisyauth/sender.js";
-import { createAuthReceiver } from "@noisytransfer/noisyauth/receiver.js";
+import { createAuthSender } from "@noisytransfer/noisyauth";
+import { createAuthReceiver } from "@noisytransfer/noisyauth";
 import { suite } from "@noisytransfer/crypto";
 
 const BASE_WS = "ws://localhost:1234/ws";

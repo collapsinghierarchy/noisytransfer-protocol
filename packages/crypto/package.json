@@ -13,10 +13,19 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./suite.js": "./src/suite.js",
-    "./signature.js": "./src/signature.js"
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./signature": {
+      "import": "./src/signature.js"
+    },
+    "./suite": {
+      "import": "./src/suite.js"
+    },
+    "./hash": {
+      "import": "./src/hash.js"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@hpke/core": "^1.7.3",

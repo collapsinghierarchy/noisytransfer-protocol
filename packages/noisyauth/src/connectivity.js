@@ -1,6 +1,6 @@
 // Unify transport wiring + kick off the pre-ready phase for RTC/mailbox.
 import { STATES, classifyTransportClose } from "./states.js";
-import { NoisyError, fromUnknown } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError, fromUnknown } from '@noisytransfer/errors/noisy-error';
 
 
 function safeDetail(ev) {

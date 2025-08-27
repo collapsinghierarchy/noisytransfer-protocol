@@ -13,13 +13,25 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./base64.js": "./src/base64.js",
-    "./buffer.js": "./src/buffer.js",
-    "./serial.js": "./src/serial.js",
-    "./async.js": "./src/async.js",
-    "./logger.js": "./src/logger.js"
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./async": {
+      "import": "./src/async.js"
+    },
+    "./base64": {
+      "import": "./src/base64.js"
+    },
+    "./buffer": {
+      "import": "./src/buffer.js"
+    },
+    "./logger": {
+      "import": "./src/logger.js"
+    },
+    "./serial": {
+      "import": "./src/serial.js"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@noisytransfer/errors": "^0.2.0"

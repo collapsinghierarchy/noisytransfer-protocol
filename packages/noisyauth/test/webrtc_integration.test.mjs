@@ -37,9 +37,9 @@ function restoreGlobal(name, value) {
 }
 
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
-import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
+import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth";
 import { suite } from "@noisytransfer/crypto";
-import { STATES } from "@noisytransfer/noisyauth/states.js";
+import { STATES } from "@noisytransfer/noisyauth/states";
 
 const isBun = typeof globalThis.Bun !== 'undefined';
 

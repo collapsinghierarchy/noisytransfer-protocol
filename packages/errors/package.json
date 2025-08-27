@@ -13,9 +13,13 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./noisy-error.js": "./src/noisy-error.js"
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./noisy-error": {
+      "import": "./src/noisy-error.js"
+    },
+    "./package.json": "./package.json"
   },
   "license": "AGPL-3.0-only",
   "publishConfig": {

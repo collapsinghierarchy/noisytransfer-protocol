@@ -13,12 +13,19 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./constants.js": "./src/constants.js",
-    "./states.js": "./src/states.js",
-    "./sender.js": "./src/sender.js",
-    "./receiver.js": "./src/receiver.js"
+    ".": {
+      "import": "./src/index.js"
+    },
+    "./receiver": {
+      "import": "./src/receiver.js"
+    },
+    "./sender": {
+      "import": "./src/sender.js"
+    },
+    "./states": {
+      "import": "./src/states.js"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@noisytransfer/errors": "^0.2.0",

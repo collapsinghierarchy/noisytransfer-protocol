@@ -15,7 +15,7 @@ globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 
 // noisystream API (stream-only)
-import { sendFileWithAuth, recvFileWithAuth } from "@noisytransfer/noisystream/index.js";
+import { sendFileWithAuth, recvFileWithAuth } from "@noisytransfer/noisystream";
 // frame helpers used in the bottom tests
 import {
   STREAM,
@@ -23,8 +23,8 @@ import {
   packStreamReady, parseStreamReady,
   packStreamData,  parseStreamData,
   packStreamFin,   parseStreamFin
-} from "@noisytransfer/noisystream/frames.js";
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+} from "@noisytransfer/noisystream/frames";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 
 /* -------------------------------- helpers ---------------------------------- */
 async function cleanDown(rawA, rawB, sigA, sigB) {

@@ -6,10 +6,10 @@ import { computeCommitment } from "@noisytransfer/crypto";
 import { computeSASFromFrames } from "@noisytransfer/crypto";
 import { STATES } from "./states.js";
 import { ReceiverFsm } from "./receiver_fsm.js";
-import { unb64 } from "@noisytransfer/util/base64.js";
+import { unb64 } from "@noisytransfer/util/base64";
 import { attachTransportLifecycle } from "./connectivity.js";
 import { makePhaseTimer } from "./phase_timer.js";
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 
 
 export function createAuthReceiver(tx, hooks = {}, opts = {}) {

@@ -1,5 +1,5 @@
 // Parallel Range download + per-chunk decrypt + final verification.
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { validateManifest, ctOffsetOfChunk, ctLenOfChunk, aadFor } from './manifest.js';
 import { createSHA256 } from '@noisytransfer/crypto';
 import { createRSAVerifier } from '@noisytransfer/crypto';

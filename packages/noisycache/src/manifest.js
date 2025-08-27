@@ -1,6 +1,6 @@
 // Helpers for manifest math + validation.
 
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 
 import { CACHE } from '@noisytransfer/constants';
 

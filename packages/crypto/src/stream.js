@@ -6,10 +6,10 @@ import {
   createReceiverSession,
 } from "./handshake.js";
 
-import { withTimeout } from "@noisytransfer/util/async.js";
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
-import { asU8 } from "@noisytransfer/util/buffer.js";
-import { b64u } from "@noisytransfer/util/base64.js";
+import { withTimeout } from "@noisytransfer/util/async";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { asU8 } from "@noisytransfer/util/buffer";
+import { b64u } from "@noisytransfer/util/base64";
 import { makeEncryptor, makeDecryptor } from "./aead.js";
 
 /**

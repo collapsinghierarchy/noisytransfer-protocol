@@ -11,10 +11,10 @@
 //   hash: string              // hex SHA-256 of ciphertext transcript
 // }
 
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { CACHE } from '@noisytransfer/constants';
 
-import { b64u, unb64u } from '@noisytransfer/util/base64.js';
+import { b64u, unb64u } from '@noisytransfer/util/base64';
 
 
 export function buildKeyPacket({ id, fk, baseIV, chunkSize, totalSize, chunks, hash }) {

@@ -1,8 +1,8 @@
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { suite } from '@noisytransfer/crypto';
 import { signChunk } from '@noisytransfer/crypto';
-import { b64u, unb64u } from '@noisytransfer/util/base64.js';
-import { createAuthSender } from '@noisytransfer/noisyauth/sender.js';
+import { b64u, unb64u } from '@noisytransfer/util/base64';
+import { createAuthSender } from '@noisytransfer/noisyauth/sender';
 import { buildKeyPacket } from './keypacket.js';
 import { makeCourierFrame } from './shared.js';
 

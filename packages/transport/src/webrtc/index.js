@@ -1,7 +1,7 @@
 export { rtcInitiator } from "./initiator.js";
 export { rtcResponder } from "./responder.js";
-
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+export { hardCloseRTC } from "./rtc-utils.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 
 export async function dialRtcUntilReady({ role, signal, rtcCfg = {}, maxAttempts = 3, backoffMs = 200 }) {
   let lastErr;

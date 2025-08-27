@@ -1,4 +1,4 @@
-import { b64u } from '@noisytransfer/util/base64.js';
+import { b64u } from '@noisytransfer/util/base64';
 
 import { CACHE } from '@noisytransfer/constants';
 

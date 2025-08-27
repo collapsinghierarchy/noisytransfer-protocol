@@ -1,5 +1,5 @@
-import { asU8 } from "@noisytransfer/util/buffer.js";
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { asU8 } from "@noisytransfer/util/buffer";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 
 const te = new TextEncoder();
 

@@ -1,7 +1,13 @@
 // packages/transport/src/webrtc/responder.js
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { isTransport } from "../core.js";
-import { shouldAcceptCandidate } from "./rtc-utils.js";
+ import {
+   shouldAcceptCandidate,
+   getLocalFingerprintFromPC,
+   getRemoteFingerprintFromPC,
+   hardCloseRTC
+ } from "./rtc-utils.js";
+
 
 /**
  * Return a Transport facade immediately; connect later when an offer arrives
@@ -22,10 +28,15 @@ export function rtcResponder(signal, rtcCfg = {}) {
 
   const tx = {
     get isConnected() { return connected; },
+    // Optional alias for symmetry with any “isUp” usage elsewhere:
+    get isUp() { return connected; },
     onUp(cb)    { onUpHandlers.add(cb);    return () => onUpHandlers.delete(cb); },
     onDown(cb)  { onDownHandlers.add(cb);  return () => onDownHandlers.delete(cb); },
     onClose(cb) { onCloseHandlers.add(cb); return () => onCloseHandlers.delete(cb); },
     onMessage(cb){ onMessageHandlers.add(cb); return () => onMessageHandlers.delete(cb); },
+    // Expose DTLS fingerprint helpers immediately. They return null until SDP is set.
+    getLocalFingerprint()  { return getLocalFingerprintFromPC(pc); },
+    getRemoteFingerprint() { return getRemoteFingerprintFromPC(pc); },
     send(_) {
       throw new NoisyError({ code: "NC_TRANSPORT_DOWN", message: "RTC DataChannel not open" });
     },

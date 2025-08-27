@@ -1,9 +1,9 @@
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 import { PROTO_LABEL } from '@noisytransfer/constants';
-import { unb64u } from '@noisytransfer/util/base64.js';
-import { asU8, concat, lpConcat } from '@noisytransfer/util/buffer.js';
+import { unb64u } from '@noisytransfer/util/base64';
+import { asU8, concat, lpConcat } from '@noisytransfer/util/buffer';
 import * as hash from './hash.js';
-import { logger } from '@noisytransfer/util/logger.js';
+import { logger } from '@noisytransfer/util/logger';
 
 
 let { sha3_256, shake128, toHex } = hash;
