@@ -6,14 +6,11 @@ import { Readable } from 'node:stream';
 const cryptoImpl = globalThis.crypto ?? nodeCrypto;
 
 // Node helpers ---------------------------------------------------------------
-
 export function createSHA256() {
   return nodeCreateHash('sha256');
 }
 
 export { Readable };
-
-
 
 /** SHA-256 via WebCrypto; returns Uint8Array */
 export async function sha256(data) {

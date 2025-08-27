@@ -10,6 +10,7 @@
     "test:util": "node --test packages/util",
     "test:watch": "node --test --watch packages",
     "test:spec": "node --test --test-reporter=spec packages",
+    "test:ci": "node scripts/run-tests-ci.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier -w .",
