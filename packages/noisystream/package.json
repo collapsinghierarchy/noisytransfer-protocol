@@ -14,10 +14,12 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./frames": {
-      "import": "./src/frames.js"
+      "import": "./src/frames.js",
+      "types": "./src/frames.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -62,5 +64,6 @@
     "transport",
     "webrtc"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

@@ -14,16 +14,20 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./receiver": {
-      "import": "./src/receiver.js"
+      "import": "./src/receiver.js",
+      "types": "./src/receiver.d.ts"
     },
     "./sender": {
-      "import": "./src/sender.js"
+      "import": "./src/sender.js",
+      "types": "./src/sender.d.ts"
     },
     "./states": {
-      "import": "./src/states.js"
+      "import": "./src/states.js",
+      "types": "./src/states.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -72,5 +76,6 @@
     "transport",
     "webrtc"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

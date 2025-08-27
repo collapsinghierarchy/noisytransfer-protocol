@@ -15,9 +15,8 @@
     "node": ">=20",
     "bun": ">=1.1.0"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@roamhq/wrtc": "^0.9.0"
-  },
-  "optionalDependencies": {}
+    "@roamhq/wrtc": "^0.9.0",
+    "typescript": "^5.9.2"
+  }
 }

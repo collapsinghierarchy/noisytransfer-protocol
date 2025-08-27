@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -52,5 +53,6 @@
   "engines": {
     "node": ">=18"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

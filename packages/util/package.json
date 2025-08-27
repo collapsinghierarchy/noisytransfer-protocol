@@ -14,22 +14,28 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./async": {
-      "import": "./src/async.js"
+      "import": "./src/async.js",
+      "types": "./src/async.d.ts"
     },
     "./base64": {
-      "import": "./src/base64.js"
+      "import": "./src/base64.js",
+      "types": "./src/base64.d.ts"
     },
     "./buffer": {
-      "import": "./src/buffer.js"
+      "import": "./src/buffer.js",
+      "types": "./src/buffer.d.ts"
     },
     "./logger": {
-      "import": "./src/logger.js"
+      "import": "./src/logger.js",
+      "types": "./src/logger.d.ts"
     },
     "./serial": {
-      "import": "./src/serial.js"
+      "import": "./src/serial.js",
+      "types": "./src/serial.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -58,5 +64,6 @@
     "transport",
     "webrtc"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

@@ -15,12 +15,12 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@noisytransfer/constants": "^0.2.0"
   },
   "description": "NoisyTransfer constants (experimental)",
   "repository": {
@@ -39,5 +39,6 @@
     "streaming",
     "transport",
     "webrtc"
-  ]
+  ],
+  "types": "./src/index.d.ts"
 }

@@ -14,10 +14,12 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./noisy-error": {
-      "import": "./src/noisy-error.js"
+      "import": "./src/noisy-error.js",
+      "types": "./src/noisy-error.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -43,5 +45,6 @@
     "transport",
     "webrtc"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

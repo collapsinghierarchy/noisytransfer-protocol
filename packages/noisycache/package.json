@@ -5,16 +5,20 @@
   "main": "src/index.js",
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./downloader": {
-      "import": "./src/downloader.js"
+      "import": "./src/downloader.js",
+      "types": "./src/downloader.d.ts"
     },
     "./http_store": {
-      "import": "./src/http_store.js"
+      "import": "./src/http_store.js",
+      "types": "./src/http_store.d.ts"
     },
     "./uploader": {
-      "import": "./src/uploader.js"
+      "import": "./src/uploader.js",
+      "types": "./src/uploader.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -63,5 +67,6 @@
   "engines": {
     "node": ">=18"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

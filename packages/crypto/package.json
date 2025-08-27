@@ -14,16 +14,20 @@
   },
   "exports": {
     ".": {
-      "import": "./src/index.js"
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
     },
     "./signature": {
-      "import": "./src/signature.js"
+      "import": "./src/signature.js",
+      "types": "./src/signature.d.ts"
     },
     "./suite": {
-      "import": "./src/suite.js"
+      "import": "./src/suite.js",
+      "types": "./src/suite.d.ts"
     },
     "./hash": {
-      "import": "./src/hash.js"
+      "import": "./src/hash.js",
+      "types": "./src/hash.d.ts"
     },
     "./package.json": "./package.json"
   },
@@ -64,5 +68,6 @@
     "quantumsafe",
     "SAS"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }
