@@ -1,15 +1,18 @@
-import { makeScope } from "./lifecycle.js";
-import { makeSessionCtx } from "./session.js";
-import { timeoutsFor } from "./timeouts.js";
-import { makeCommit, makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
 import { computeCommitment } from "@noisytransfer/crypto";
 import { computeSASFromFrames } from "@noisytransfer/crypto";
-import { STATES } from "./states.js";
-import { ReceiverFsm } from "./receiver_fsm.js";
-import { unb64 } from "@noisytransfer/util/base64.js";
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
+import { unb64 } from "@noisytransfer/util/base64";
+
 import { attachTransportLifecycle } from "./connectivity.js";
+import { makeScope } from "./lifecycle.js";
+import { makeCommit, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
 import { makePhaseTimer } from "./phase_timer.js";
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { ReceiverFsm } from "./receiver_fsm.js";
+import { makeSessionCtx } from "./session.js";
+import { STATES } from "./states.js";
+import { timeoutsFor } from "./timeouts.js";
+
+
 
 
 export function createAuthReceiver(tx, hooks = {}, opts = {}) {
@@ -21,7 +24,7 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
   const waitAckAtLeast    = async () => {};
   const minRecoverableRid = () => 0;
 
-  let nudged = false, lastSent = null;
+  let lastSent = null;
   const stateSubs = new Set();
   const emitState = (t) => {
     try { hooks.onState?.(t); } catch {}
@@ -46,7 +49,6 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
   const recvMsg = opts.recvMsg; // ArrayBuffer | Uint8Array (msg_R)
   if (!recvMsg) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'authcore/receiver: recvMsg is required' });
 
-  const expectSend = opts.sendMeta ?? opts.id?.send ?? null; // optional peer meta check
   const algs = opts.algs ?? { kem: "X25519Kyber25519", kdf: "HKDF-SHA-256" };
   // Keep sender/receiver in sync with the same commitment parameters
   const COMMIT_HASH  = "SHA3-256";
@@ -91,9 +93,10 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
     }
   }
 
-  
+  let ASYNC = false;
   if (session.policy === "rtc") {
     // Arm WAIT_COMMIT timer immediately if not already armed
+    ASYNC = true;
     timer.arm(STATES.WAIT_COMMIT, "timeout_wait_commit");
   }
   

@@ -1,4 +1,4 @@
-//TODO: currently obsolete
+//TODO: currently obsolete, but may be useful later
 /* Shared helper: wait for ICE gathering to finish */
 async function waitIceGatheringComplete(pc) {
   if (pc.iceGatheringState === "complete") return;

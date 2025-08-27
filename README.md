@@ -19,9 +19,13 @@ Each package lives under `packages/` and is versioned together.
 Install dependencies with your preferred package manager and run tests:
 
 ```sh
-npm install
+bun install
 npm test
 ```
 
-Tests may require WebSocket/WebRTC shims for Node environments. APIs are
-unstable and may change without notice.
+For the tests you will need a running localhost backend e.g. [noisytransfer back-end](https://github.com/collapsinghierarchy/noisytransfer).
+
+> APIs are unstable and may change without notice.
+
+## Notice on WebRTC Tests
+Some webRTC integration tests inside noisyauth and noisystream have a connection teardown bug, because of which the tests are failing.

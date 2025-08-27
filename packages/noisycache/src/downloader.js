@@ -1,14 +1,15 @@
 // Parallel Range download + per-chunk decrypt + final verification.
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
-import { validateManifest, ctOffsetOfChunk, ctLenOfChunk, aadFor } from './manifest.js';
 import { createSHA256 } from '@noisytransfer/crypto';
 import { createRSAVerifier } from '@noisytransfer/crypto';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
+
+import { validateManifest, ctOffsetOfChunk, ctLenOfChunk, aadFor } from './manifest.js';
 
 export async function downloadAndDecrypt({
   storage,                // HttpStore
   objectId,
   manifest,               // already fetched, or
-  manifestUrl,            // if provided, we can fetch via fetch(manifestUrl) externally; storage focuses /blob
+  _manifestUrl,           // (unused here) fetch manifest externally if needed
   decryptor,              // { aead, tagBytes, openChunk(seq, ct, aad) }
   parallel = 6,
   sink,                   // Node Writable-like: has .write(Buffer) and awaits when returns Promise|false
@@ -68,7 +69,7 @@ export async function downloadAndDecrypt({
     try {
       const start = ctOffsetOfChunk(seq, manifest);
       const end = start + ctLenOfChunk(seq, manifest) - 1;
-      const { bytes: ct, contentRange } = await storage.getRange({ objectId, start, end, signal: abortSignal });
+      const { bytes: ct, contentRange: _contentRange } = await storage.getRange({ objectId, start, end, signal: abortSignal });
       if (!ct || ct.length !== (end - start + 1)) {
         throw new NoisyError({ code: 'NC_RANGE_SIZE', message: 'range length mismatch', context: { seq, start, end, got: ct?.length } });
       }
@@ -97,7 +98,11 @@ export async function downloadAndDecrypt({
     if (abortSignal?.aborted) { rejectOnce?.(new DOMException('Aborted', 'AbortError')); return; }
     while (active < parallel && nextSeq < totalChunks) {
       const s = nextSeq++; active++;
-      runOne(s).then(() => { active--; if (active === 0 && nextSeq >= totalChunks) resolveOnce?.(); })
+      runOne(s).then(() => {
+        active--;
+        if (active === 0 && nextSeq >= totalChunks) resolveOnce?.();
+        return true; // satisfy promise/always-return
+      })
                .catch((e) => { active--; rejectOnce?.(e); });
     }
     if (active === 0 && nextSeq >= totalChunks) resolveOnce?.();

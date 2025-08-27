@@ -8,9 +8,9 @@ globalThis.crypto ??= wc;
 import WebSocket from 'ws';
 globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
-import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
-import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';
-import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader.js';
+import { HttpStore } from '@noisytransfer/noisycache/http_store';
+import { uploadCiphertext } from '@noisytransfer/noisycache/uploader';
+import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader';
 import { mailboxTransport as mkMailbox } from '@noisytransfer/transport';
 import { suite } from '@noisytransfer/crypto';
 import { genRSAPSS } from '@noisytransfer/crypto';

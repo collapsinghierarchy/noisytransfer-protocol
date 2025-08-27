@@ -13,15 +13,57 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./base64.js": "./src/base64.js",
-    "./buffer.js": "./src/buffer.js",
-    "./serial.js": "./src/serial.js",
-    "./async.js": "./src/async.js",
-    "./logger.js": "./src/logger.js"
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./async": {
+      "import": "./src/async.js",
+      "types": "./src/async.d.ts"
+    },
+    "./base64": {
+      "import": "./src/base64.js",
+      "types": "./src/base64.d.ts"
+    },
+    "./buffer": {
+      "import": "./src/buffer.js",
+      "types": "./src/buffer.d.ts"
+    },
+    "./logger": {
+      "import": "./src/logger.js",
+      "types": "./src/logger.d.ts"
+    },
+    "./serial": {
+      "import": "./src/serial.js",
+      "types": "./src/serial.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
-    "@noisytransfer/errors": "workspace:*"
-  }
+    "@noisytransfer/errors": "^0.2.0"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "NoisyTransfer util (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/util"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ],
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

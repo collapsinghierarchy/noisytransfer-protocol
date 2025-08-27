@@ -1,4 +1,4 @@
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 /**
  * @typedef {Object} SessionCtx
  * @property {string} roomId

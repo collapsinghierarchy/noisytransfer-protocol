@@ -1,6 +1,12 @@
+import { asU8, isByteLike } from "@noisytransfer/util/buffer";
+
 import { binReplacer, binReviver } from "../ser.js";
-import { asU8, isByteLike } from "@noisytransfer/util/buffer.js";
-import { addEvt } from "./rtc-utils.js";
+import {
+  addEvt,
+  pickPreferredFingerprintFromSdp,
+  parseDtlsFingerprintsFromSdp,
+  hardCloseRTC,
+} from "./rtc-utils.js";
 
 /** Resolve when the DataChannel TX buffer is empty. */
 export function waitForDrain(dc) {
@@ -19,28 +25,14 @@ export function waitForDrain(dc) {
 
 /** Wraps a DataChannel with our transport surface (send/onMessage/onUp/onDown/onClose/close + features). */
 export function wrapDataChannel(dc, pc, side = "") {
-  const tag = side ? `[DC:${side}]` : "[DC]";
   dc.binaryType = "arraybuffer";
-
-  function parseFingerprintsFromSDP(sdp) {
-    const fps = [];
-    const re = /^a=fingerprint:([A-Za-z0-9-]+)\s+([0-9A-F:]+)$/gmi;
-    let m;
-    while ((m = re.exec(sdp)) !== null) {
-      const alg = m[1].toUpperCase();
-      const hex = m[2].replace(/:/g, "");
-      const u8 = new Uint8Array(hex.length / 2);
-      for (let i = 0; i < u8.length; i++) u8[i] = parseInt(hex.substr(i * 2, 2), 16);
-      fps.push({ alg, bytes: u8 });
-    }
-    return fps.find(f => f.alg === "SHA-256") || fps[0] || null;
-  }
 
   // ---- event fanout (up/down/close) ----
   let isUp = (dc.readyState === "open");
   const ups = new Set();
   const downs = new Set();
   const closes = new Set();
+  const msgUnsubs = new Set();
 
   const unOpen = addEvt(dc, "open", () => {
     if (!isUp) {
@@ -81,16 +73,18 @@ export function wrapDataChannel(dc, pc, side = "") {
     try { unError?.(); } catch {}
     try { unClose?.(); } catch {}
     try { unConn?.(); } catch {}
+    try { for (const un of msgUnsubs) { try { un(); } catch {} } msgUnsubs.clear(); } catch {}
+    try { dc.onmessage = null; } catch {}
   }
 
   // ---- DTLS fingerprint helpers expected by tests ----
   function getLocalFingerprint() {
     const sdp = pc.localDescription?.sdp || pc.currentLocalDescription?.sdp || "";
-    return parseFingerprintsFromSDP(sdp);
+    return pickPreferredFingerprintFromSdp(sdp);
   }
   function getRemoteFingerprint() {
     const sdp = pc.remoteDescription?.sdp || pc.currentRemoteDescription?.sdp || "";
-    return parseFingerprintsFromSDP(sdp);
+    return pickPreferredFingerprintFromSdp(sdp);
   }
 
   return {
@@ -101,7 +95,7 @@ export function wrapDataChannel(dc, pc, side = "") {
       // kept for backwards-compat; prefers SHA-256 from remote SDP
       peerFingerprints: () => {
         const sdp = pc.remoteDescription?.sdp || pc.currentRemoteDescription?.sdp || "";
-        return parseFingerprintsFromSDP(sdp);
+        return parseDtlsFingerprintsFromSdp(sdp);
       },
     },
 
@@ -119,33 +113,33 @@ export function wrapDataChannel(dc, pc, side = "") {
       dc.send(JSON.stringify(data, binReplacer));
     },
 
-    onMessage: (cb) => addEvt(dc, "message", (ev) => {
-      let payload = null;
-      if (typeof ev.data === "string") payload = JSON.parse(ev.data, binReviver);
-      else                             payload = asU8(ev.data);
-      cb(payload);
-    }),
+    onMessage: (cb) => {
+      const un = addEvt(dc, "message", (ev) => {
+        let payload = null;
+        if (typeof ev.data === "string") payload = JSON.parse(ev.data, binReviver);
+        else                             payload = asU8(ev.data);
+        cb(payload);
+      });
+      msgUnsubs.add(un);
+      return () => { try { un(); } finally { msgUnsubs.delete(un); } };
+    },
 
     onUp:    (cb) => { ups.add(cb);    return () => ups.delete(cb); },
     onDown:  (cb) => { downs.add(cb);  return () => downs.delete(cb); },
     onClose: (cb) => { closes.add(cb); return () => closes.delete(cb); },
 
-    close: (code = 1000, reason = "app_close") => {
-      // best-effort drain, then close both dc & pc; also detach listeners
-      const doClose = () => {
-        cleanupListeners();
-        try { dc.close(); } catch {}
-        try { pc.close(); } catch {}
-      };
-      // avoid double close if already closing/closed
-      if (dc.readyState === "closing" || dc.readyState === "closed") {
-        doClose();
-        return;
-      }
-      Promise.race([
-        waitForDrain(dc),
-        new Promise(r => setTimeout(r, 500)),
-      ]).finally(doClose);
+   close: async (code = 1000, reason = "app_close") => {
+      cleanupListeners();
+      try {
+        if (dc && dc.readyState === "open") {
+          try { dc.bufferedAmountLowThreshold = 0; } catch {}
+          await Promise.race([
+            waitForDrain(dc),
+            new Promise(r => setTimeout(r, 200))
+          ]);
+        }
+      } catch {}
+      await hardCloseRTC(pc, { dc });
     },
   };
 }

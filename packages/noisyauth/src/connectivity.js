@@ -1,20 +1,6 @@
-// Unify transport wiring + kick off the pre-ready phase for RTC/mailbox.
-import { STATES, classifyTransportClose } from "./states.js";
-import { NoisyError, fromUnknown } from '@noisytransfer/errors/noisy-error.js';
-
-
-function safeDetail(ev) {
-  try {
-    if (!ev) return undefined;
-    // Only keep serializable crumbs
-    return { type: ev.type ?? String(ev?.name ?? ""), message: String(ev?.message ?? "") };
-  } catch { return undefined; }
-}
-
 export function attachTransportLifecycle({
   tx,
   scope,
-  policy,
   startNow,
   startWhenUp,
   onUp,

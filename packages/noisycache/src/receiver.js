@@ -1,10 +1,11 @@
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
-import { parseKeyPacket } from './keypacket.js';
-import { createAuthReceiver } from '@noisytransfer/noisyauth/receiver.js';
 import { suite } from '@noisytransfer/crypto';
 import { importVerifyKey, verifyChunk } from '@noisytransfer/crypto';
-import { unb64u } from '@noisytransfer/util/base64.js';
-import { FRAME_TYPE, isCourierFrame } from './shared.js';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
+import { createAuthReceiver } from '@noisytransfer/noisyauth/receiver';
+import { unb64u } from '@noisytransfer/util/base64';
+
+import { parseKeyPacket } from './keypacket.js';
+import { isCourierFrame } from './shared.js';
 
 /**
  * Receiver: run authcore; import sender VK from msgS; verify & open courier frame; return parsed KeyPacket.

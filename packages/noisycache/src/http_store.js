@@ -1,4 +1,4 @@
-import { NoisyError, fromUnknown  } from '@noisytransfer/errors/noisy-error.js';
+import { NoisyError, fromUnknown  } from '@noisytransfer/errors/noisy-error';
 
 const sleep = (ms, signal) => new Promise((res, rej) => {
   const t = setTimeout(res, ms);

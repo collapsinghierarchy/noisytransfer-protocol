@@ -1,6 +1,6 @@
-import { NoisyError } from "@noisytransfer/errors/noisy-error.js";
-import { logger } from "@noisytransfer/util/logger.js";
-import { asU8, isByteLike } from "@noisytransfer/util/buffer.js";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { asU8, isByteLike } from "@noisytransfer/util/buffer";
+import { logger } from "@noisytransfer/util/logger";
 
 import {
   STREAM,
@@ -57,7 +57,6 @@ export async function sendFileWithAuth(opts) {
 
   let unsubMsg = null;
   let unsubClose = null;
-  let readyR = null;
 
   const cleanup = () => {
     try { unsubMsg?.(); } catch {}
@@ -74,9 +73,6 @@ export async function sendFileWithAuth(opts) {
         rej(new NoisyError({ code: "NC_ABORTED", message: "aborted" }));
       }, { once: true });
     });
-    // race in a fire-and-forget manner by awaiting abortP whenever we await below
-    // (we'll use Promise.race([... , abortP]) inline)
-    readyR = abortP;
   }
 
   // 1) send ns_init

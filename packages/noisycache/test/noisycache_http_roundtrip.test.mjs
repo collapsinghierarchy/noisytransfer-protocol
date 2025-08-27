@@ -4,9 +4,9 @@ import { webcrypto as wc } from 'node:crypto';
 
 globalThis.crypto ??= wc; // ensure WebCrypto
 
-import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
-import { uploadCiphertext } from '@noisytransfer/noisycache/uploader.js';
-import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader.js';
+import { HttpStore } from '@noisytransfer/noisycache/http_store';
+import { uploadCiphertext } from '@noisytransfer/noisycache/uploader';
+import { downloadAndDecrypt } from '@noisytransfer/noisycache/downloader';
 import { makeEncryptor, makeDecryptor } from "@noisytransfer/crypto";
 
 const asU8 = (x) => (x instanceof Uint8Array ? x : new Uint8Array(x));

@@ -1,19 +1,16 @@
-import { asU8, concat } from '@noisytransfer/util/buffer.js';
-import { u32be } from '@noisytransfer/util/serial.js';
+import { asU8, concat } from '@noisytransfer/util/buffer';
+import { u32be } from '@noisytransfer/util/serial';
 import { createHash as nodeCreateHash , webcrypto as nodeCrypto } from 'node:crypto';
 import { Readable } from 'node:stream';
 
 const cryptoImpl = globalThis.crypto ?? nodeCrypto;
 
 // Node helpers ---------------------------------------------------------------
-
 export function createSHA256() {
   return nodeCreateHash('sha256');
 }
 
 export { Readable };
-
-
 
 /** SHA-256 via WebCrypto; returns Uint8Array */
 export async function sha256(data) {

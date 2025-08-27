@@ -13,7 +13,7 @@ globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
 import { browserWSWithReconnect, rtcInitiator, rtcResponder } from "@noisytransfer/transport";
 
-import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth/index.js";
+import { createAuthSender, createAuthReceiver } from "@noisytransfer/noisyauth";
 
 import {
   STREAM,
@@ -45,10 +45,12 @@ async function sha256Hex(u8) {
   return Buffer.from(d).toString("hex");
 }
 
+
+
 /* ------------------------ signaling over your backend ------------------------ */
 async function makeSignal(room, side) {
   const url = `ws://localhost:1234/ws?appID=${room}&side=${side}`;
-  const wsTx = browserWSWithReconnect(url, { maxRetries: 2 });
+  const wsTx = browserWSWithReconnect(url, { maxRetries: 0 });
 
   const outQ = [];
   const flush = () => {
@@ -81,7 +83,7 @@ async function dial(role, signal, rtcCfg = {}) {
 
 /* ----------------------------------- test ---------------------------------- */
 
-test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 40000  }, { skip: isBun && 'wrtc not supported by Bun yet' }, async () => {
+test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 40000  }, async () => {
   const room = crypto.randomUUID();
   const sessionId = crypto.randomUUID();
 
@@ -90,6 +92,10 @@ test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 4000
     dial("initiator", sigA, { iceServers: [] }),
     dial("responder", sigB, { iceServers: [] }),
   ]);
+
+  console.log(rawA.getLocalFingerprint());
+  console.log(rawB.getLocalFingerprint());
+
 
   // Sanity: wrapper must expose DTLS fingerprint helpers
   assert.equal(typeof rawA.getLocalFingerprint, "function", "rawA.getLocalFingerprint() missing");
@@ -228,6 +234,7 @@ test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 4000
   const outHash = await sha256Hex(new Uint8Array(out));
   assert.equal(outHash, srcHash, "content hash mismatch");
 
+  console.log("✓ DTLS-auth + cleartext stream over RTC DC (no PQ)");
   // Cleanup
   await sleep(50);
   try { await rawA.close?.(); } catch {}

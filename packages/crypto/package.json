@@ -13,16 +13,61 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./suite.js": "./src/suite.js",
-    "./signature.js": "./src/signature.js"
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./signature": {
+      "import": "./src/signature.js",
+      "types": "./src/signature.d.ts"
+    },
+    "./suite": {
+      "import": "./src/suite.js",
+      "types": "./src/suite.d.ts"
+    },
+    "./hash": {
+      "import": "./src/hash.js",
+      "types": "./src/hash.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@hpke/core": "^1.7.3",
     "@hpke/hybridkem-x25519-kyber768": "^1.6.1",
     "@noble/hashes": "^1.5.0",
-    "@noisytransfer/errors": "workspace:*",
-    "@noisytransfer/util": "workspace:*"
-  }
+    "@noisytransfer/errors": "^0.2.0",
+    "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
+  "description": "NoisyTransfer crypto (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/crypto"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc",
+    "websocket",
+    "quantumsafe",
+    "SAS"
+  ],
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

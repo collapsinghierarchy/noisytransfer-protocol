@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { HttpStore } from '@noisytransfer/noisycache/http_store.js';
-import { NoisyError } from '@noisytransfer/errors/noisy-error.js';
+import { HttpStore } from '@noisytransfer/noisycache/http_store';
+import { NoisyError } from '@noisytransfer/errors/noisy-error';
 
 const BASE = process.env.NOISY_BASE ?? 'http://localhost:1234';
 

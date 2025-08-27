@@ -13,27 +13,70 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./constants.js": "./src/constants.js",
-    "./states.js": "./src/states.js"
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./receiver": {
+      "import": "./src/receiver.js",
+      "types": "./src/receiver.d.ts"
+    },
+    "./sender": {
+      "import": "./src/sender.js",
+      "types": "./src/sender.d.ts"
+    },
+    "./states": {
+      "import": "./src/states.js",
+      "types": "./src/states.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
-    "@noisytransfer/errors": "workspace:*",
-    "@roamhq/wrtc": "^0.9.0"
+    "@noisytransfer/errors": "^0.2.0",
+    "@noisytransfer/crypto": "^0.2.0",
+    "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0"
   },
   "devDependencies": {
-    "@noisytransfer/crypto": "workspace:*",
-    "@noisytransfer/noisystream": "workspace:*",
-    "@noisytransfer/transport": "workspace:*",
-    "@noisytransfer/util": "workspace:*",
-    "ws": "^8.18.0"
+    "@noisytransfer/crypto": "^0.2.0",
+    "@noisytransfer/noisystream": "^0.2.0",
+    "@noisytransfer/transport": "^0.2.0",
+    "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0",
+    "ws": "^8.18.0",
+    "@roamhq/wrtc": "^0.9.0"
   },
-  "optionalDependencies": {
-    "@roamhq/wrtc-linux-x64": "^0.9.0",
-    "@roamhq/wrtc-linux-arm64": "^0.9.0",
-    "@roamhq/wrtc-darwin-arm64": "^0.9.0",
-    "@roamhq/wrtc-darwin-x64": "^0.9.0",
-    "@roamhq/wrtc-win-x64": "^0.9.0"
-  }
+  "optionalDependencies": {},
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@roamhq/wrtc": "^0.9.0"
+  },
+  "peerDependenciesMeta": {
+    "@roamhq/wrtc": {
+      "optional": true
+    }
+  },
+  "description": "NoisyTransfer noisyauth (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/noisyauth"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ],
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

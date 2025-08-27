@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/errors",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "main": "src/index.js",
   "files": [
@@ -13,8 +13,38 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "exports": {
-    ".": "./src/index.js",
-    "./index.js": "./src/index.js",
-    "./noisy-error.js": "./src/noisy-error.js"
-  }
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./noisy-error": {
+      "import": "./src/noisy-error.js",
+      "types": "./src/noisy-error.d.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "NoisyTransfer errors (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/errors"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ],
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }

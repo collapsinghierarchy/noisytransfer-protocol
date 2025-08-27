@@ -4,19 +4,69 @@
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    "./*": "./src/*",
-    ".": "./src/index.js"
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./downloader": {
+      "import": "./src/downloader.js",
+      "types": "./src/downloader.d.ts"
+    },
+    "./http_store": {
+      "import": "./src/http_store.js",
+      "types": "./src/http_store.d.ts"
+    },
+    "./uploader": {
+      "import": "./src/uploader.js",
+      "types": "./src/uploader.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "devDependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "@noisytransfer/transport": "^0.2.0"
   },
   "dependencies": {
-    "@noisytransfer/crypto": "workspace:*",
-    "@noisytransfer/errors": "workspace:*",
-    "@noisytransfer/transport": "workspace:*",
-    "@noisytransfer/util": "workspace:*"
-  }
+    "@noisytransfer/crypto": "^0.2.0",
+    "@noisytransfer/errors": "^0.2.0",
+    "@noisytransfer/util": "^0.2.0",
+    "@noisytransfer/noisyauth": "^0.2.0",
+    "@noisytransfer/constants": "^0.2.0"
+  },
+  "license": "AGPL-3.0-only",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src"
+  ],
+  "optionalDependencies": {},
+  "peerDependencies": {},
+  "peerDependenciesMeta": {},
+  "description": "NoisyTransfer noisycache (experimental)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/collapsinghierarchy/noisytransfer-protocol.git",
+    "directory": "packages/noisycache"
+  },
+  "bugs": {
+    "url": "https://github.com/collapsinghierarchy/noisytransfer-protocol/issues"
+  },
+  "homepage": "https://github.com/collapsinghierarchy/noisytransfer-protocol#readme",
+  "keywords": [
+    "crypto",
+    "hpke",
+    "noisytransfer",
+    "streaming",
+    "transport",
+    "webrtc"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "types": "./src/index.d.ts"
 }
