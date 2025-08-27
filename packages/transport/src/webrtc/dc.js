@@ -25,7 +25,6 @@ export function waitForDrain(dc) {
 
 /** Wraps a DataChannel with our transport surface (send/onMessage/onUp/onDown/onClose/close + features). */
 export function wrapDataChannel(dc, pc, side = "") {
-  const tag = side ? `[DC:${side}]` : "[DC]";
   dc.binaryType = "arraybuffer";
 
   // ---- event fanout (up/down/close) ----

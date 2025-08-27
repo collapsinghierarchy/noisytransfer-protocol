@@ -5,7 +5,7 @@ import { createAuthReceiver } from '@noisytransfer/noisyauth/receiver';
 import { unb64u } from '@noisytransfer/util/base64';
 
 import { parseKeyPacket } from './keypacket.js';
-import { FRAME_TYPE, isCourierFrame } from './shared.js';
+import { isCourierFrame } from './shared.js';
 
 /**
  * Receiver: run authcore; import sender VK from msgS; verify & open courier frame; return parsed KeyPacket.

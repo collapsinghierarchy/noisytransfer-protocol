@@ -1,5 +1,30 @@
-import { CODES } from './codes.js';
-/** @typedef {keyof typeof CODES} NoisyCode */
+/**
+ * TODO: Enrich error codes with default messages and have NoisyError use them.
+ *
+ * Goal:
+ *   - Keep a central CODES map, but map each code → human-readable default message.
+ *   - NoisyError uses that default when `message` is omitted.
+ *
+ * Steps:
+ * 1) packages/errors/src/codes.js
+ *    - Turn CODES into code → default message:
+ *      export const CODES = Object.freeze({
+ *        NC_PROTOCOL:          'Protocol misuse',
+ *        NC_BAD_PARAM:         'Invalid parameter',
+ *        NC_RTC_SDP_FAILED:    'WebRTC SDP error',
+ *        NC_RTC_ICE_TIMEOUT:   'ICE negotiation timed out',
+ *        NC_AEAD_MISMATCH:     'AEAD/tagBytes mismatch',
+ *        NC_DECRYPT_FAILED:    'Decryption failed',
+ *        NC_DECRYPT_SIZE:      'Plaintext length mismatch',
+ *        NC_RANGE_SIZE:        'HTTP range length mismatch',
+ *        NC_HASH_MISMATCH:     'Digest mismatch',
+ *        NC_SIGNATURE_INVALID: 'Signature verification failed',
+ *        NC_INTERNAL_ORDER:    'Out-of-order draining',
+ *        // ...add any others used in the repo
+ *      });
+ *    - Keep KNOWN_CODES / isErrorCode as they are.
+ */
+
 
 export class NoisyError extends Error {
   /**

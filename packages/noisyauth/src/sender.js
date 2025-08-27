@@ -8,7 +8,7 @@ import { unb64 } from "@noisytransfer/util";
 
 import { attachTransportLifecycle } from "./connectivity.js";
 import { makeScope } from "./lifecycle.js";
-import { makeOffer, makeReveal, makeRcvConfirm, isFrame } from "./messages.js";
+import { makeOffer, makeRcvConfirm, isFrame } from "./messages.js";
 import { makePhaseTimer } from "./phase_timer.js";
 import { SenderFsm } from "./sender_fsm.js";
 import { makeSessionCtx } from "./session.js";
@@ -33,7 +33,7 @@ export function createAuthSender(tx, hooks = {}, opts = {}) {
   };
   const fsm = new SenderFsm(frame => RC.send(frame), { onTransition: emitState });
 
-  let nudged = false, lastSent = null, finished = false;
+  let lastSent = null, finished = false;
   let waitingPeerConfirm = false;
   let sas = null;
    const timer = makePhaseTimer({
@@ -68,9 +68,7 @@ export function createAuthSender(tx, hooks = {}, opts = {}) {
   });
 
   // --- options / ids --------------------------------------------------------
-  const sendMeta    = opts.sendMeta ?? opts.id?.send ?? null;  // optional metadata
   const expectRecv  = opts.recvMeta ?? opts.id?.recv ?? null;  // optional metadata
-  const algs        = opts.algs ?? { kem: "X25519Kyber25519", kdf: "HKDF-SHA-256" };
   // commitment verification parameters (must match receiver’s computeCommitment)
   const COMMIT_HASH  = "SHA3-256";
   const COMMIT_LABEL = "noisyauth";
@@ -81,8 +79,6 @@ export function createAuthSender(tx, hooks = {}, opts = {}) {
   // --- state vars -----------------------------------------------------------
   let seenCommit = null;        // last commit frame (idempotency)
   let myOffer    = null;
-  let myConfirm  = null;
-  let finishedSAS = false;
   let msgR = null; // msg_R (from reveal frame, used for SAS)
 
   // for commitment verify
@@ -176,7 +172,6 @@ export function createAuthSender(tx, hooks = {}, opts = {}) {
 
       // Send our confirm, but DO NOT enter READY yet — wait for peer confirm (RTC)
       const rcv = makeRcvConfirm({ session });
-      myConfirm = rcv;
       lastSent = rcv;
       RC.send(rcv);
       waitingPeerConfirm = (session.policy === "rtc");

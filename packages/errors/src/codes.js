@@ -34,3 +34,8 @@ export const CODES = Object.freeze({
   // Storage / I/O outside HTTP status mapping (optional bucket)
   NC_STORE_IO: 'NC_STORE_IO',
 });
+
+export const KNOWN_CODES = new Set(Object.keys(CODES));
+export function isErrorCode(x) {
+  return KNOWN_CODES.has(x);
+}

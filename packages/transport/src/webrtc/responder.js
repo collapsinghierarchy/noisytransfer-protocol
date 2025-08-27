@@ -5,8 +5,7 @@ import { isTransport } from "../core.js";
  import {
    shouldAcceptCandidate,
    getLocalFingerprintFromPC,
-   getRemoteFingerprintFromPC,
-   hardCloseRTC
+   getRemoteFingerprintFromPC
  } from "./rtc-utils.js";
 
 
