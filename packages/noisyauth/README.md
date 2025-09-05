@@ -71,14 +71,15 @@ If your transport supports connectivity callbacks, `attachTransportLifecycle` wi
 
 ### Hooks
 
-| Hook                                   | When it fires                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `onState(s)`                           | Any FSM transition (`IDLE → … → READY / ERROR / MALLORY`).                     |
-| `onError(err)`                         | Fatal protocol/transport error.                                                |
-| `onSAS(sas)`                           | After both sides can compute the SAS (6-digit DECIMAL by default).             |
-| `onSASHash(hex)`                       | Full SAS transcript hash (hex); useful for out-of-band checks.                 |
-| `waitConfirm(sas) => Promise<boolean>` | **Required** for interactive flows. Must resolve within timeout or auth fails. |
-| `onDone({ msgR                         | msgS })`                                                                       | Transitioned to `READY`. **Sender** receives `{ msgR }`. **Receiver** receives `{ msgS }`. |
+| Hook                                   | When it fires                                                                                                 |
+|----------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `onState(s)`                           | Any FSM transition (`IDLE → … → READY / ERROR / MALLORY`).                                                    |
+| `onError(err)`                         | Fatal protocol/transport error.                                                                               |
+| `onSAS(sas)`                           | After both sides can compute the SAS (6-digit DECIMAL by default).                                            |
+| `onSASHash(hex)`                       | Full SAS transcript hash (hex); useful for out-of-band checks.                                                |
+| `waitConfirm(sas) => Promise<boolean>` | **Required** for interactive flows. Must resolve within timeout or auth fails.                                |
+| `onDone({ msgR \| msgS })`             | Transitioned to `READY`. **Sender** receives `{ msgR }`. **Receiver** receives `{ msgS }`.                    |
+
 
 ### Options
 
