@@ -1,18 +1,13 @@
-export function attachTransportLifecycle({
-  tx,
-  scope,
-  startNow,
-  startWhenUp,
-  onUp,
-  onDown,
-}) {
+export function attachTransportLifecycle({ tx, scope, startNow, startWhenUp, onUp, onDown }) {
   const cleanups = [];
   let started = false;
 
   const startOnlyOnce = (fn) => {
     if (started) return;
     started = true;
-    try { fn && fn(); } catch {}
+    try {
+      fn && fn();
+    } catch {}
   };
 
   // 1) Start-now on next microtask
@@ -20,8 +15,13 @@ export function attachTransportLifecycle({
     queueMicrotask(() => startOnlyOnce(startNow));
   }
 
-  const fireUp = () => { onUp?.(); startOnlyOnce(startWhenUp); };
-  const fireDown = () => { onDown?.(); };
+  const fireUp = () => {
+    onUp?.();
+    startOnlyOnce(startWhenUp);
+  };
+  const fireDown = () => {
+    onDown?.();
+  };
 
   // 2) If already connected, treat as up
   if (typeof startWhenUp === "function" && tx?.isConnected) {
@@ -52,11 +52,15 @@ export function attachTransportLifecycle({
   // 4) **NEW**: FINAL FALLBACK — if we still haven’t started, kick on next tick anyway.
   // Safe because kickoff functions are idempotent and handle transient send failures internally.
   if (typeof startWhenUp === "function") {
-    queueMicrotask(() => startOnlyOnce(startWhenUp));   // <—— add this line
+    queueMicrotask(() => startOnlyOnce(startWhenUp)); // <—— add this line
   }
 
   const teardown = () => {
-    for (const c of cleanups.splice(0)) { try { c && c(); } catch {} }
+    for (const c of cleanups.splice(0)) {
+      try {
+        c && c();
+      } catch {}
+    }
   };
   if (scope?.signal) {
     if (scope.signal.aborted) teardown();

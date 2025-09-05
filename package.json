@@ -5,25 +5,41 @@
   ],
   "packageManager": "npm@10",
   "scripts": {
-    "build": "bun run -A turbo build || true",
-    "test": "node --test packages",
-    "test:util": "node --test packages/util",
-    "test:watch": "node --test --watch packages",
-    "test:spec": "node --test --test-reporter=spec packages",
-    "test:ci": "node scripts/run-tests-ci.mjs",
+    "test": "node --test",
+    "test:spec": "node scripts/run-tests-ci.mjs",
+    "test:unit": "node scripts/run-tests-ci.mjs",
+    "test:ci:unit": "CI=1 node --test --test-reporter=spec packages",
+    "test:all:unit": "npm run test:spec",
+    "test:ci:webrtc": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-webrtc.mjs",
+    "test:rtc": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-webrtc.mjs",
+    "test:ci": "npm run test:spec && npm run test:ci:webrtc",
+    "test:crypto": "node scripts/run-package.mjs crypto",
+    "test:errors": "node scripts/run-package.mjs errors",
+    "test:util": "node scripts/run-package.mjs util",
+    "test:transport": "node scripts/run-package.mjs transport",
+    "test:noisystream": "node scripts/run-package.mjs noisystream",
+    "test:noisyauth": "node scripts/run-package.mjs noisyauth",
+    "test:noisycache": "node scripts/run-package.mjs noisycache",
+    "test:transport:e2e": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-package.mjs transport --include-e2e",
+    "test:noisystream:e2e": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-package.mjs noisystream --include-e2e",
+    "test:noisyauth:e2e": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-package.mjs noisyauth --include-e2e",
+    "test:mailbox": "node --test packages/transport/test/mailbox_*.test.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier -w .",
     "format:check": "prettier -c .",
-    "pack:dry": "node scripts/pack-all-dry.mjs"
+    "pack:dry": "node scripts/pack-all-dry.mjs",
+    "ci:local": "npm run lint && npm run test:spec && npm run test:ci:webrtc",
+    "types:emit": "tsc -p tsconfig.types.json",
+    "types:clean": "rimraf types"
   },
   "engines": {
-    "node": ">=20",
-    "bun": ">=1.1.0"
+    "node": ">=20"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
     "@roamhq/wrtc": "^0.9.0",
+    "@types/node": "^24.3.1",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -33,6 +49,7 @@
     "eslint-plugin-regexp": "^2.10.0",
     "eslint-plugin-security": "^3.0.1",
     "prettier": "^3.6.2",
+    "rimraf": "^5.0.0",
     "typescript": "^5.9.2"
   }
 }

@@ -1,10 +1,9 @@
-import { PROTO_LABEL } from '@noisytransfer/constants';
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
-import { unb64u } from '@noisytransfer/util/base64';
-import { lpConcat } from '@noisytransfer/util/buffer';
+import { PROTO_LABEL } from "@noisytransfer/constants";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { unb64u } from "@noisytransfer/util/base64";
+import { lpConcat } from "@noisytransfer/util/buffer";
 
-import * as hash from './hash.js';
-
+import * as hash from "./hash.js";
 
 let { sha3_256, shake128, toHex } = hash;
 
@@ -18,30 +17,37 @@ async function deriveSASCode(fullHash, digits = 6) {
   for (let i = 0; i < 2; i++) {
     const o = i * 4;
     const v = ((out[o] << 24) | (out[o + 1] << 16) | (out[o + 2] << 8) | out[o + 3]) >>> 0;
-    if (v < MAX) return String(v % M).padStart(digits, '0');
+    if (v < MAX) return String(v % M).padStart(digits, "0");
   }
   const v = ((out[0] << 24) | (out[1] << 16) | (out[2] << 8) | out[3]) >>> 0;
-  return String(v % M).padStart(digits, '0');
+  return String(v % M).padStart(digits, "0");
 }
 
 /**
  * Compute SAS + full transcript hash (hex) from auth frames.
  * @returns {Promise<{ sas: string, fullHashHex: string }>}
  */
-export async function computeSASFromFrames({ roomId, sessionId, commit, offer, reveal, digits = 6 }) {
+export async function computeSASFromFrames({
+  roomId,
+  sessionId,
+  commit,
+  offer,
+  reveal,
+  digits = 6,
+}) {
   if (!offer?.offer?.msgS || !offer?.offer?.nonceS)
-    throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'sas: missing offer fields' });
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "sas: missing offer fields" });
   if (!reveal?.reveal?.msgR || !reveal?.reveal?.nonceR)
-    throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'sas: missing reveal fields' });
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "sas: missing reveal fields" });
   if (!commit?.commit?.commitment)
-    throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'sas: missing commitment' });
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "sas: missing commitment" });
 
   const msgS = unb64u(offer.offer.msgS);
-  const nS   = unb64u(offer.offer.nonceS);
+  const nS = unb64u(offer.offer.nonceS);
   const msgR = unb64u(reveal.reveal.msgR);
-  const nR   = unb64u(reveal.reveal.nonceR);
+  const nR = unb64u(reveal.reveal.nonceR);
 
-  const header = `${PROTO_LABEL}|${roomId ?? ''}|${sessionId ?? ''}|${commit.commit.commitment}`;
+  const header = `${PROTO_LABEL}|${roomId ?? ""}|${sessionId ?? ""}|${commit.commit.commitment}`;
   const transcript = lpConcat([enc.encode(header), msgS, nS, msgR, nR]); // Uint8Array
 
   const fullHash = await sha3_256(transcript);

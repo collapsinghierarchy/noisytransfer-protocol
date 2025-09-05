@@ -22,19 +22,23 @@ export function makePhaseTimer({ T, onTimeout, resend }) {
       id = null;
       try {
         // Allow callers to optionally "resend" something on expiry if they want
-        if (typeof resend === 'function') resend(nextPhase, code);
+        if (typeof resend === "function") resend(nextPhase, code);
       } finally {
         onTimeout?.(code, { phase: nextPhase });
       }
     }, ms);
   }
 
-  function is(p) { return phase === p; }
+  function is(p) {
+    return phase === p;
+  }
 
   return {
     arm,
     clear,
     is,
-    get phase() { return phase; },
+    get phase() {
+      return phase;
+    },
   };
 }

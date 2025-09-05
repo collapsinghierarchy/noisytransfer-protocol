@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/crypto",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "main": "src/index.js",
   "files": [
@@ -35,9 +35,9 @@
     "@hpke/core": "^1.7.3",
     "@hpke/hybridkem-x25519-kyber768": "^1.6.1",
     "@noble/hashes": "^1.5.0",
-    "@noisytransfer/errors": "^0.2.0",
-    "@noisytransfer/util": "^0.2.0",
-    "@noisytransfer/constants": "^0.2.0"
+    "@noisytransfer/errors": "^0.2.1",
+    "@noisytransfer/util": "^0.2.1",
+    "@noisytransfer/constants": "^0.2.1"
   },
   "license": "AGPL-3.0-only",
   "publishConfig": {

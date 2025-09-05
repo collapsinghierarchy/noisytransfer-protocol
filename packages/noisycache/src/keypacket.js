@@ -11,16 +11,17 @@
 //   hash: string              // hex SHA-256 of ciphertext transcript
 // }
 
-import { CACHE } from '@noisytransfer/constants';
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
-import { b64u, unb64u } from '@noisytransfer/util/base64';
-
+import { CACHE } from "@noisytransfer/constants";
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { b64u, unb64u } from "@noisytransfer/util/base64";
 
 export function buildKeyPacket({ id, fk, baseIV, chunkSize, totalSize, chunks, hash }) {
-  if (typeof id !== 'string' || !id) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'id required' });
+  if (typeof id !== "string" || !id)
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "id required" });
   const fkU8 = fk instanceof Uint8Array ? fk : new Uint8Array(fk);
   const ivU8 = baseIV instanceof Uint8Array ? baseIV : new Uint8Array(baseIV);
-  if (ivU8.length !== 12) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'baseIV must be 12 bytes' });
+  if (ivU8.length !== 12)
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "baseIV must be 12 bytes" });
   const obj = {
     type: CACHE.KEYPACKET_TYPE,
     id,
@@ -29,7 +30,7 @@ export function buildKeyPacket({ id, fk, baseIV, chunkSize, totalSize, chunks, h
     chunkSize: Number(chunkSize) | 0,
     totalSize: Number(totalSize) | 0,
     chunks: Number(chunks) | 0,
-    hash: String(hash || ''),
+    hash: String(hash || ""),
   };
   const txt = JSON.stringify(obj);
   return new TextEncoder().encode(txt);
@@ -38,15 +39,22 @@ export function buildKeyPacket({ id, fk, baseIV, chunkSize, totalSize, chunks, h
 export function parseKeyPacket(bytes) {
   const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   let obj;
-  try { obj = JSON.parse(new TextDecoder().decode(u8)); }
-  catch (e) { throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'invalid JSON', cause: e }); }
-  if (!obj || obj.type !== CACHE.KEYPACKET_TYPE) throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'unexpected type' });
+  try {
+    obj = JSON.parse(new TextDecoder().decode(u8));
+  } catch (e) {
+    throw new NoisyError({ code: "NC_KEYPACKET_BAD", message: "invalid JSON", cause: e });
+  }
+  if (!obj || obj.type !== CACHE.KEYPACKET_TYPE)
+    throw new NoisyError({ code: "NC_KEYPACKET_BAD", message: "unexpected type" });
   const { id, fk_b64u, iv_b64u, chunkSize, totalSize, chunks, hash } = obj;
-  if (typeof id !== 'string' || !id) throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'missing id' });
-  if (typeof fk_b64u !== 'string' || typeof iv_b64u !== 'string') throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'missing key/iv' });
+  if (typeof id !== "string" || !id)
+    throw new NoisyError({ code: "NC_KEYPACKET_BAD", message: "missing id" });
+  if (typeof fk_b64u !== "string" || typeof iv_b64u !== "string")
+    throw new NoisyError({ code: "NC_KEYPACKET_BAD", message: "missing key/iv" });
   const fk = unb64u(fk_b64u);
   const baseIV = unb64u(iv_b64u);
-  if (baseIV.length !== 12) throw new NoisyError({ code: 'NC_KEYPACKET_BAD', message: 'baseIV length != 12' });
+  if (baseIV.length !== 12)
+    throw new NoisyError({ code: "NC_KEYPACKET_BAD", message: "baseIV length != 12" });
   const m = {
     id,
     fk,
@@ -54,7 +62,7 @@ export function parseKeyPacket(bytes) {
     chunkSize: Number(chunkSize) | 0,
     totalSize: Number(totalSize) | 0,
     chunks: Number(chunks) | 0,
-    hash: typeof hash === 'string' ? hash : '',
+    hash: typeof hash === "string" ? hash : "",
   };
   return m;
 }

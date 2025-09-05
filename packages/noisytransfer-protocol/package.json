@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/noisytransfer-protocol",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -14,12 +14,12 @@
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
   },
   "dependencies": {
-    "@noisytransfer/noisyauth": "^0.2.0",
-    "@noisytransfer/noisystream": "^0.2.0",
-    "@noisytransfer/noisycache": "^0.2.0",
-    "@noisytransfer/crypto": "^0.2.0",
-    "@noisytransfer/errors": "^0.2.0",
-    "@noisytransfer/transport": "^0.2.0"
+    "@noisytransfer/noisyauth": "^0.2.1",
+    "@noisytransfer/noisystream": "^0.2.1",
+    "@noisytransfer/noisycache": "^0.2.1",
+    "@noisytransfer/crypto": "^0.2.1",
+    "@noisytransfer/errors": "^0.2.1",
+    "@noisytransfer/transport": "^0.2.1"
   },
   "license": "AGPL-3.0-only",
   "publishConfig": {

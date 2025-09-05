@@ -6,7 +6,10 @@ const te = new TextEncoder();
 /** Ensure a 12-byte IV (96-bit). */
 function assertIv12(iv) {
   if (!(iv instanceof Uint8Array) || iv.length !== 12) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: "crypto/aead: AES-GCM baseIV must be 12 bytes" });
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: "crypto/aead: AES-GCM baseIV must be 12 bytes",
+    });
   }
 }
 
@@ -14,7 +17,10 @@ function assertIv12(iv) {
 async function importAesGcm(keyBytes) {
   const k = asU8(keyBytes);
   if (![16, 24, 32].includes(k.length)) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: `crypto/aead: AES key length must be 16/24/32, got ${k.length}` });
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: `crypto/aead: AES key length must be 16/24/32, got ${k.length}`,
+    });
   }
   return crypto.subtle.importKey("raw", k, "AES-GCM", false, ["encrypt", "decrypt"]);
 }
@@ -27,7 +33,10 @@ async function importAesGcm(keyBytes) {
 export function deriveIv(baseIV, idx) {
   assertIv12(baseIV);
   if (!Number.isInteger(idx) || idx < 0) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: "crypto/aead: idx must be a non-negative integer" });
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: "crypto/aead: idx must be a non-negative integer",
+    });
   }
   const iv = new Uint8Array(baseIV); // copy
 
@@ -36,10 +45,10 @@ export function deriveIv(baseIV, idx) {
   // Add idx modulo 2^32
   ctr = (ctr + (idx >>> 0)) >>> 0;
   // Write back BE
-  iv[8]  = (ctr >>> 24) & 0xff;
-  iv[9]  = (ctr >>> 16) & 0xff;
-  iv[10] = (ctr >>> 8)  & 0xff;
-  iv[11] = (ctr >>> 0)  & 0xff;
+  iv[8] = (ctr >>> 24) & 0xff;
+  iv[9] = (ctr >>> 16) & 0xff;
+  iv[10] = (ctr >>> 8) & 0xff;
+  iv[11] = (ctr >>> 0) & 0xff;
 
   return iv;
 }
@@ -56,20 +65,17 @@ function buildAAD(id, idx) {
  * - baseIV: 12-byte Uint8Array (exported so it can be included in KeyPacket)
  * - seal(id, idx, pt): returns ciphertext+tag (Uint8Array)
  */
-export async function makeEncryptor(
-  keyBytes,
-  baseIV = crypto.getRandomValues(new Uint8Array(12))
-) {
+export async function makeEncryptor(keyBytes, baseIV = crypto.getRandomValues(new Uint8Array(12))) {
   assertIv12(baseIV);
   const key = await importAesGcm(keyBytes);
   const baseIVCopy = new Uint8Array(baseIV); // immutability outward
 
   async function seal(id, idx, pt) {
     try {
-      const iv  = deriveIv(baseIVCopy, idx);
+      const iv = deriveIv(baseIVCopy, idx);
       const aad = buildAAD(id, idx);
-      const u8  = asU8(pt);
-      const ct  = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, u8);
+      const u8 = asU8(pt);
+      const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: aad }, key, u8);
       return new Uint8Array(ct);
     } catch (cause) {
       throw new NoisyError({ code: "NC_AEAD_FAILED", message: "AES-GCM seal failed", cause });
@@ -96,10 +102,10 @@ export async function makeDecryptor(keyBytes, baseIV) {
 
   async function open(id, idx, ct) {
     try {
-      const iv  = deriveIv(baseIVCopy, idx);
+      const iv = deriveIv(baseIVCopy, idx);
       const aad = buildAAD(id, idx);
-      const u8  = asU8(ct);
-      const pt  = await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: aad }, key, u8);
+      const u8 = asU8(ct);
+      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: aad }, key, u8);
       return new Uint8Array(pt);
     } catch (cause) {
       // WebCrypto throws on tag mismatch / wrong key / wrong AAD

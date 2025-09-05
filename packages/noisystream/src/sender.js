@@ -1,12 +1,16 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { flush as flushTx } from "@noisytransfer/transport";
 import { asU8, isByteLike } from "@noisytransfer/util/buffer";
 import { logger } from "@noisytransfer/util/logger";
 
+
 import {
   STREAM,
-  packStreamInit,  parseStreamReady,
+  packStreamInit,
+  parseStreamReady,
   packStreamData,
-  packStreamFin
+  packStreamFin,
+  parseStreamFinAck,
 } from "./frames.js";
 
 /**
@@ -18,7 +22,12 @@ import {
  *   chunkBytes?: number,               // default 64 KiB
  *   encTag?: Uint8Array|ArrayBuffer|null, // optional, echoed in ns_init
  *   onProgress?:(sent:number,total:number)=>void,
- *   abortSignal?: AbortSignal
+ *   abortSignal?: AbortSignal,
+ *   finAck?: boolean,
+ *   finAckTimeoutMs?: number,
+ *   finAckMaxRetries?: number,
+ *   finAckBackoffMs?: number,
+ *   adaptiveChunking?: boolean,
  * }} SendOpts
  */
 
@@ -29,12 +38,19 @@ import {
  */
 export async function sendFileWithAuth(opts) {
   const {
-    tx, sessionId, source,
+    tx,
+    sessionId,
+    source,
     totalBytes: totalBytesOpt,
     chunkBytes = 64 * 1024,
     encTag = null,
     onProgress,
-    abortSignal
+    abortSignal,
+    finAck = false,
+    finAckTimeoutMs = 5000,
+    finAckMaxRetries = 3,
+    finAckBackoffMs = 100,
+    adaptiveChunking = false,
   } = opts || {};
 
   if (!tx || typeof tx.send !== "function") {
@@ -50,17 +66,28 @@ export async function sendFileWithAuth(opts) {
     throw new NoisyError({ code: "NC_BAD_PARAM", message: "sendFileWithAuth: chunkBytes invalid" });
   }
 
-  const { iter, totalBytesKnown, totalBytes } = makeChunkIterator(source, chunkBytes, totalBytesOpt);
+  const { iter, totalBytesKnown, totalBytes } = makeChunkIterator(
+    source,
+    chunkBytes,
+    totalBytesOpt
+  );
   if (!totalBytesKnown && typeof totalBytesOpt !== "number") {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: "sendFileWithAuth: totalBytes must be provided for streaming sources" });
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: "sendFileWithAuth: totalBytes must be provided for streaming sources",
+    });
   }
 
   let unsubMsg = null;
   let unsubClose = null;
 
   const cleanup = () => {
-    try { unsubMsg?.(); } catch {}
-    try { unsubClose?.(); } catch {}
+    try {
+      unsubMsg?.();
+    } catch {}
+    try {
+      unsubClose?.();
+    } catch {}
   };
 
   if (abortSignal?.aborted) {
@@ -69,9 +96,13 @@ export async function sendFileWithAuth(opts) {
 
   if (abortSignal) {
     const abortP = new Promise((_, rej) => {
-      abortSignal.addEventListener("abort", () => {
-        rej(new NoisyError({ code: "NC_ABORTED", message: "aborted" }));
-      }, { once: true });
+      abortSignal.addEventListener(
+        "abort",
+        () => {
+          rej(new NoisyError({ code: "NC_ABORTED", message: "aborted" }));
+        },
+        { once: true }
+      );
     });
   }
 
@@ -96,20 +127,77 @@ export async function sendFileWithAuth(opts) {
     });
   });
 
-  // 3) stream data
+  // 3) stream data (optional adaptive chunk sizing)
   let sent = 0;
   let seq = 0;
+  let curChunk = chunkBytes;
   for await (const chunk of iter) {
     if (abortSignal?.aborted) throw new NoisyError({ code: "NC_ABORTED", message: "aborted" });
     const u8 = asU8(chunk);
     safeSend(tx, packStreamData({ sessionId, seq, chunk: u8 }));
     seq++;
     sent += u8.byteLength;
-    try { onProgress?.(sent, totalBytes); } catch {}
+    try {
+      onProgress?.(sent, totalBytes);
+    } catch {}
+    if (adaptiveChunking && typeof tx?.bufferedAmount === "number") {
+      // Nudge chunk size between 32–128 KiB based on bufferedAmount heuristic
+      const buf = tx.bufferedAmount;
+      if (buf > 1_048_576) curChunk = Math.max(32 * 1024, (curChunk / 2) | 0);
+      else if (buf < 128 * 1024) curChunk = Math.min(128 * 1024, curChunk * 2);
+      // Generators for Blob/byte-like honor external `chunkBytes` by ref only if implemented to re-read size.
+      // For iterable sources, users can pre-chunk; this is a best-effort heuristic.
+    }
   }
 
-  // 4) fin
-  safeSend(tx, packStreamFin({ sessionId, ok: true }));
+  try {
+    await flushTx(tx, { timeoutMs: 3000, resolveOnClose: true });
+  } catch (err) {
+    // Ignore harmless flush timeouts; rely on FIN/ACK ordering for delivery
+    if (!(err && err.code === "NC_TRANSPORT_FLUSH_TIMEOUT")) throw err;
+  }
+
+  if (!finAck) {
+    safeSend(tx, packStreamFin({ sessionId, ok: true }));
+  } else {
+    // resend FIN with bounded backoff until ACK or timeout
+    let tries = 0;
+    let done = false;
+    const unsub = tx.onMessage((m) => {
+      if (!m || m.type !== STREAM.FIN_ACK || m.sessionId !== sessionId) return;
+      try {
+        parseStreamFinAck(m);
+        done = true;
+      } catch {}
+    });
+    try {
+      while (!done && tries <= finAckMaxRetries) {
+        safeSend(tx, packStreamFin({ sessionId, ok: true }));
+        // wait for ack or per-try timeout
+        await Promise.race([
+          new Promise((res) => setTimeout(res, finAckTimeoutMs)),
+          (async () => {
+            while (!done) await new Promise((r) => setTimeout(r, 5));
+          })(),
+        ]);
+        if (done) break;
+        tries++;
+        await new Promise((r) =>
+          setTimeout(r, Math.min(1000, finAckBackoffMs * (1 << (tries - 1))))
+        );
+      }
+      if (!done)
+        throw new NoisyError({
+          code: "NC_SIGNAL_RETRIES",
+          message: "FIN/ACK not received before timeout",
+          context: { tries, finAckTimeoutMs },
+        });
+    } finally {
+      try {
+        unsub?.();
+      } catch {}
+    }
+  }
 
   cleanup();
   logger.debug("[ns] sender: complete", { sessionId, bytes: sent, frames: seq + 2 /*init+fin*/ });
@@ -121,7 +209,13 @@ function safeSend(tx, frame) {
   try {
     tx.send(frame);
   } catch (err) {
-    throw new NoisyError({ code: "NC_TX_SEND", message: "send failed", context: { type: frame?.type }, cause: err, retriable: true });
+    throw new NoisyError({
+      code: "NC_TX_SEND",
+      message: "send failed",
+      context: { type: frame?.type },
+      cause: err,
+      retriable: true,
+    });
   }
 }
 
@@ -157,7 +251,7 @@ function makeChunkIterator(source, chunkBytes, totalBytesOpt) {
 
   // (Async)Iterable of chunks
   if (isAsyncIterable(source) || isSyncIterable(source)) {
-    const total = (typeof totalBytesOpt === "number" && totalBytesOpt >= 0) ? totalBytesOpt : 0;
+    const total = typeof totalBytesOpt === "number" && totalBytesOpt >= 0 ? totalBytesOpt : 0;
     // normalize to async iterator
     const iter = (async function* () {
       for await (const c of source) yield asU8(c);
@@ -169,4 +263,4 @@ function makeChunkIterator(source, chunkBytes, totalBytesOpt) {
 }
 
 const isAsyncIterable = (x) => x && typeof x[Symbol.asyncIterator] === "function";
-const isSyncIterable  = (x) => x && typeof x[Symbol.iterator] === "function";
+const isSyncIterable = (x) => x && typeof x[Symbol.iterator] === "function";

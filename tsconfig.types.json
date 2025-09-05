@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "noEmitOnError": false,
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "rootDir": "."
+  },
+  "include": ["packages/*/src/**/*.js"],
+  "exclude": [
+    "**/*.d.ts",
+    "packages/test-helpers/**",
+    "**/test/**",
+    "**/__tests__/**",
+    "**/*.spec.js",
+    "**/*.test.js"
+  ]
+}

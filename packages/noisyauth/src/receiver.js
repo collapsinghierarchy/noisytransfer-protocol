@@ -1,6 +1,6 @@
 import { computeCommitment } from "@noisytransfer/crypto";
 import { computeSASFromFrames } from "@noisytransfer/crypto";
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { unb64 } from "@noisytransfer/util/base64";
 
 import { attachTransportLifecycle } from "./connectivity.js";
@@ -12,28 +12,46 @@ import { makeSessionCtx } from "./session.js";
 import { STATES } from "./states.js";
 import { timeoutsFor } from "./timeouts.js";
 
+/** @typedef {import("./types").AuthHooks} AuthHooks */
+/** @typedef {import("./types").AuthReceiverOpts} AuthReceiverOpts */
+/** @typedef {import("./types").AuthState} AuthState */
 
-
-
+/**
+ * @param {import("../transport").TxLike} tx
+ * @param {AuthHooks=} hooks
+ * @param {AuthSReceiverOpts=} opts
+ * @returns {{ close:()=>void, getState:()=>AuthState, onState:(cb:(s:AuthState)=>void)=>()=>void }}
+ */
 export function createAuthReceiver(tx, hooks = {}, opts = {}) {
-  const scope   = makeScope();
+  const scope = makeScope();
   const session = makeSessionCtx(tx, opts.session || opts);
-  const T       = timeoutsFor(session.policy);
+  const T = timeoutsFor(session.policy);
 
   const RC = tx;
-  const waitAckAtLeast    = async () => {};
+  const waitAckAtLeast = async () => {};
   const minRecoverableRid = () => 0;
 
   let lastSent = null;
   const stateSubs = new Set();
   const emitState = (t) => {
-    try { hooks.onState?.(t); } catch {}
-    for (const cb of stateSubs) { try { cb(t); } catch {} }
+    try {
+      hooks.onState?.(t);
+    } catch {}
+    for (const cb of stateSubs) {
+      try {
+        cb(t);
+      } catch {}
+    }
   };
-  const fsm = new ReceiverFsm(frame => RC.send(frame), { onTransition: emitState });
+  const fsm = new ReceiverFsm((frame) => RC.send(frame), { onTransition: emitState });
   const timer = makePhaseTimer({
     T,
-    resend: () => { if (lastSent) try { RC.send(lastSent); } catch {} },
+    resend: () => {
+      if (lastSent)
+        try {
+          RC.send(lastSent);
+        } catch {}
+    },
     onTimeout: (code) => fail(code),
   });
   scope.addUnsub(() => timer.clear());
@@ -47,17 +65,21 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
 
   // required input per new protocol
   const recvMsg = opts.recvMsg; // ArrayBuffer | Uint8Array (msg_R)
-  if (!recvMsg) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'authcore/receiver: recvMsg is required' });
+  if (!recvMsg)
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: "authcore/receiver: recvMsg is required",
+    });
 
   const algs = opts.algs ?? { kem: "X25519Kyber25519", kdf: "HKDF-SHA-256" };
   // Keep sender/receiver in sync with the same commitment parameters
-  const COMMIT_HASH  = "SHA3-256";
+  const COMMIT_HASH = "SHA3-256";
   const COMMIT_LABEL = "noisyauth";
 
   // idempotency caches
-  let sentCommit = null;     // commit frame we send (resend on retry)
-  let sentConfirm = null;    // rcvconfirm frame we send (resend on retry)
-  let seenOffer = null;      // last offer frame seen
+  let sentCommit = null; // commit frame we send (resend on retry)
+  let sentConfirm = null; // rcvconfirm frame we send (resend on retry)
+  let seenOffer = null; // last offer frame seen
 
   // stash for reveal
   let nonceR = null;
@@ -99,19 +121,22 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
     ASYNC = true;
     timer.arm(STATES.WAIT_COMMIT, "timeout_wait_commit");
   }
-  
+
   // Kick-off depending on policy (RTC: when up; mailbox: immediately)
   attachTransportLifecycle({
-    tx, scope, hooks, fsm,
+    tx,
+    scope,
+    hooks,
+    fsm,
     policy: session.policy,
-    startNow:     session.policy === "ws_async" ? ensureCommitSent : null,
-    startWhenUp:  session.policy === "rtc"      ? ensureCommitSent : null,
+    startNow: session.policy === "ws_async" ? ensureCommitSent : null,
+    startWhenUp: session.policy === "rtc" ? ensureCommitSent : null,
   });
 
   // inbound serialization
   let q = Promise.resolve();
   const unMsg = tx.onMessage((m) => {
-    q = q.then(() => handle(m)).catch(e => fail("receiver_handle_error", e));
+    q = q.then(() => handle(m)).catch((e) => fail("receiver_handle_error", e));
   });
   if (unMsg) scope.addUnsub(unMsg);
 
@@ -142,12 +167,12 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
       RC.send(reveal);
 
       const { sas, fullHashHex } = await computeSASFromFrames({
-           roomId: session.roomId,
-           sessionId: session.sessionId,
-           commit: sentCommit,
-           offer:  m,
-           reveal, // our reveal
-       });
+        roomId: session.roomId,
+        sessionId: session.sessionId,
+        commit: sentCommit,
+        offer: m,
+        reveal, // our reveal
+      });
       console.log("receiver: computed SAS", sas);
       hooks.onSAS?.(sas);
       hooks.onSASHash?.(fullHashHex);
@@ -165,17 +190,17 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
       sentConfirm = makeRcvConfirm({ session });
       lastSent = sentConfirm;
       RC.send(sentConfirm);
-    waitingPeerConfirm = (session.policy === "rtc");
-    if (!waitingPeerConfirm) {
-      await waitAckAtLeast(minRecoverableRid());
-      timer.clear();
-      fsm.rcvconfirm(); // -> READY
-      hooks.onDone?.({ msgS });
+      waitingPeerConfirm = session.policy === "rtc";
+      if (!waitingPeerConfirm) {
+        await waitAckAtLeast(minRecoverableRid());
+        timer.clear();
+        fsm.rcvconfirm(); // -> READY
+        hooks.onDone?.({ msgS });
+        return;
+      }
+      // RTC: wait for peer rcvconfirm or close/timeout
+      timer.arm(STATES.SAS_CONFIRM, "timeout_wait_peer_confirm");
       return;
-    }
-    // RTC: wait for peer rcvconfirm or close/timeout
-    timer.arm(STATES.SAS_CONFIRM, "timeout_wait_peer_confirm");
-    return;
     }
 
     if (isFrame(m, "rcvconfirm", session.sessionId)) {
@@ -193,6 +218,9 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
   return {
     close: () => scope.teardown(),
     getState: () => fsm.state,
-    onState: (cb) => { stateSubs.add(cb); return () => stateSubs.delete(cb); },
+    onState: (cb) => {
+      stateSubs.add(cb);
+      return () => stateSubs.delete(cb);
+    },
   };
 }

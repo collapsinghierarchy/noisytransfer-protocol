@@ -2,13 +2,14 @@ import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { b64u, unb64u } from "@noisytransfer/util/base64";
 import { asU8 } from "@noisytransfer/util/buffer";
 
-/** @typedef {'ns_init'|'ns_ready'|'ns_data'|'ns_fin'} StreamFrameType */
+/** @typedef {'ns_init'|'ns_ready'|'ns_data'|'ns_fin'|'ns_fin_ack'} StreamFrameType */
 
 export const STREAM = Object.freeze({
-  INIT:  "ns_init",
+  INIT: "ns_init",
   READY: "ns_ready",
-  DATA:  "ns_data",
-  FIN:   "ns_fin",
+  DATA: "ns_data",
+  FIN: "ns_fin",
+  FIN_ACK: "ns_fin_ack",
 });
 
 // ---------- Helpers ----------
@@ -116,8 +117,33 @@ export function parseStreamFin(m) {
   return out;
 }
 
+// ---------- FIN_ACK ----------
+/**
+ * @param {{ sessionId: string }} p
+ * @returns {{ type:'ns_fin_ack', sessionId:string }}
+ */
+export function packStreamFinAck({ sessionId }) {
+  if (!isStr(sessionId)) badFrame("fin_ack.sessionId invalid");
+  return { type: STREAM.FIN_ACK, sessionId };
+}
+
+/** @param {any} m */
+export function parseStreamFinAck(m) {
+  if (!m || m.type !== STREAM.FIN_ACK) badFrame("not ns_fin_ack", { got: m?.type });
+  if (!isStr(m.sessionId)) badFrame("fin_ack.sessionId invalid");
+  return { sessionId: m.sessionId };
+}
+
 // ---------- Type guards (handy for switches) ----------
-export const isStreamInit  = (m) => !!m && m.type === STREAM.INIT  && isStr(m.sessionId) && isNonNegInt(m.totalBytes);
+export const isStreamInit = (m) =>
+  !!m && m.type === STREAM.INIT && isStr(m.sessionId) && isNonNegInt(m.totalBytes);
 export const isStreamReady = (m) => !!m && m.type === STREAM.READY && isStr(m.sessionId);
-export const isStreamData  = (m) => !!m && m.type === STREAM.DATA  && isStr(m.sessionId) && isNonNegInt(m.seq) && typeof m.chunk === "string";
-export const isStreamFin   = (m) => !!m && m.type === STREAM.FIN   && isStr(m.sessionId) && isBool(m.ok);
+export const isStreamData = (m) =>
+  !!m &&
+  m.type === STREAM.DATA &&
+  isStr(m.sessionId) &&
+  isNonNegInt(m.seq) &&
+  typeof m.chunk === "string";
+export const isStreamFin = (m) =>
+  !!m && m.type === STREAM.FIN && isStr(m.sessionId) && isBool(m.ok);
+export const isStreamFinAck = (m) => !!m && m.type === STREAM.FIN_ACK && isStr(m.sessionId);

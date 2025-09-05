@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/constants",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "license": "AGPL-3.0-only",
   "publishConfig": {
@@ -20,8 +20,7 @@
     },
     "./package.json": "./package.json"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "description": "NoisyTransfer constants (experimental)",
   "repository": {
     "type": "git",

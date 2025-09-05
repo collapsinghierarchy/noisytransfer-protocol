@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/transport",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "main": "src/index.js",
   "files": [
@@ -24,9 +24,9 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@noisytransfer/errors": "^0.2.0",
-    "@noisytransfer/util": "^0.2.0",
-    "@noisytransfer/constants": "^0.2.0"
+    "@noisytransfer/errors": "^0.2.1",
+    "@noisytransfer/util": "^0.2.1",
+    "@noisytransfer/constants": "^0.2.1"
   },
   "devDependencies": {},
   "optionalDependencies": {},

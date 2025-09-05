@@ -1,5 +1,5 @@
 import { FRAME, ID_KIND } from "@noisytransfer/constants";
-import { NoisyError } from '@noisytransfer/errors/noisy-error';
+import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { b64url } from "@noisytransfer/util/base64"; // b64, unb64, b64url
 
 export function isFrame(m, type, sessionId) {
@@ -29,7 +29,7 @@ export function makeOffer({ session, msgS, nonceS }) {
     type: FRAME.OFFER,
     sessionId: session.sessionId,
     offer: {
-      msgS:   b64url(msgS),
+      msgS: b64url(msgS),
       nonceS: b64url(nonceS),
     },
   };
@@ -41,7 +41,7 @@ export function makeReveal({ session, msgR, nonceR }) {
     type: FRAME.REVEAL,
     sessionId: session.sessionId,
     reveal: {
-      msgR:   b64url(msgR),
+      msgR: b64url(msgR),
       nonceR: b64url(nonceR),
     },
   };
@@ -54,7 +54,8 @@ export function makeRcvConfirm({ session }) {
 
 // --- helpers you already use elsewhere (unchanged) ---
 export function normalizeId(id) {
-  if (!id) throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'authcore/messages: identity missing' });
+  if (!id)
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "authcore/messages: identity missing" });
   const kind = id.kind || ID_KIND.PUBKEY;
   const data = kind === ID_KIND.CERT ? toString(id.data) : toBytes(id.data);
   return { kind, data };
@@ -66,7 +67,10 @@ export function toBytes(x) {
   if (ArrayBuffer.isView(x)) return new Uint8Array(x.buffer, x.byteOffset, x.byteLength);
   if (x instanceof ArrayBuffer) return new Uint8Array(x);
   if (typeof x === "string") return new TextEncoder().encode(x);
-  throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'authcore/messages: toBytes unsupported type' });
+  throw new NoisyError({
+    code: "NC_BAD_PARAM",
+    message: "authcore/messages: toBytes unsupported type",
+  });
 }
 
 export function toString(x) {
@@ -74,5 +78,8 @@ export function toString(x) {
   if (x instanceof Uint8Array) return new TextDecoder().decode(x);
   if (ArrayBuffer.isView(x)) return new TextDecoder().decode(toBytes(x));
   if (x instanceof ArrayBuffer) return new TextDecoder().decode(new Uint8Array(x));
-  throw new NoisyError({ code: 'NC_BAD_PARAM', message: 'authcore/messages: toString unsupported type' });
+  throw new NoisyError({
+    code: "NC_BAD_PARAM",
+    message: "authcore/messages: toString unsupported type",
+  });
 }

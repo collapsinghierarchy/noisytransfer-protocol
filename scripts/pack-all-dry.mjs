@@ -5,15 +5,23 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const PKGS = path.join(ROOT, "packages");
-const dirs = (await fs.readdir(PKGS, { withFileTypes: true })).filter(d => d.isDirectory());
+const dirs = (await fs.readdir(PKGS, { withFileTypes: true })).filter((d) => d.isDirectory());
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 
 function looksSuspicious(p) {
   const lower = p.toLowerCase();
   return [
-    "test", "__tests__", "spec", "bench", "coverage",
-    "playground", "example", "examples", "demo", "sample"
-  ].some(tag => lower.includes(tag));
+    "test",
+    "__tests__",
+    "spec",
+    "bench",
+    "coverage",
+    "playground",
+    "example",
+    "examples",
+    "demo",
+    "sample",
+  ].some((tag) => lower.includes(tag));
 }
 
 // Parse `npm pack --dry-run --json` if available; otherwise fallback to text scan.
@@ -26,7 +34,7 @@ function getPackedFiles(pkgDir) {
     try {
       const arr = JSON.parse(res.stdout);
       // npm sometimes returns an array of one object with { files: [{ path, size, mode, type }, ...] }
-      const files = (arr?.[0]?.files ?? []).map(f => f.path).filter(Boolean);
+      const files = (arr?.[0]?.files ?? []).map((f) => f.path).filter(Boolean);
       if (files.length) return { files, raw: res.stdout };
     } catch {
       // fall through to text parsing

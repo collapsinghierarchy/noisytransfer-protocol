@@ -9,20 +9,27 @@ const PKGS = path.join(ROOT, "packages");
 const ALLOW_INTEGRATION = process.env.CI_ALLOW_INTEGRATION === "1";
 
 // Treat these filenames as integration (skip in CI unless explicitly allowed)
-const INTEGRATION_PATTERNS = [
-  /webrtc/i,
-  /rtc/i,
-  /dtls/i
-];
+const INTEGRATION_PATTERNS = [/webrtc/i, /rtc/i, /dtls/i];
 
 // quick TCP check for your local WS signaler (used by tests)
 function checkPort(host, port, timeoutMs = 500) {
   return new Promise((resolve) => {
     const s = net.connect({ host, port });
-    const done = (ok) => { try { s.destroy(); } catch {} resolve(ok); };
+    const done = (ok) => {
+      try {
+        s.destroy();
+      } catch {}
+      resolve(ok);
+    };
     const t = setTimeout(() => done(false), timeoutMs);
-    s.on("connect", () => { clearTimeout(t); done(true); });
-    s.on("error",   () => { clearTimeout(t); done(false); });
+    s.on("connect", () => {
+      clearTimeout(t);
+      done(true);
+    });
+    s.on("error", () => {
+      clearTimeout(t);
+      done(false);
+    });
   });
 }
 
@@ -31,7 +38,7 @@ async function listTests(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   for (const e of entries) {
     const p = path.join(dir, e.name);
-    if (e.isDirectory()) out.push(...await listTests(p));
+    if (e.isDirectory()) out.push(...(await listTests(p)));
     else if (/\.(mjs|js)$/i.test(e.name)) out.push(p);
   }
   return out;
@@ -44,15 +51,14 @@ function isIntegrationFile(fp) {
 
 async function findAllTests() {
   const pkgs = (await fs.readdir(PKGS, { withFileTypes: true }))
-    .filter(d => d.isDirectory())
-    .map(d => path.join(PKGS, d.name, "test"))
-  ;
+    .filter((d) => d.isDirectory())
+    .map((d) => path.join(PKGS, d.name, "test"));
   const files = [];
   for (const tdir of pkgs) {
     try {
       const stat = await fs.stat(tdir).catch(() => null);
       if (!stat?.isDirectory()) continue;
-      files.push(...await listTests(tdir));
+      files.push(...(await listTests(tdir)));
     } catch {}
   }
   return files;
@@ -72,12 +78,14 @@ async function main() {
     // If a local signaler is running, we can optionally include integration by setting CI_ALLOW_INTEGRATION=1
     const hasSignaler = await checkPort("127.0.0.1", 1234);
     if (hasSignaler) {
-      console.log("ℹ️  localhost:1234 is up. To run integration tests in CI, set CI_ALLOW_INTEGRATION=1.");
+      console.log(
+        "ℹ️  localhost:1234 is up. To run integration tests in CI, set CI_ALLOW_INTEGRATION=1."
+      );
     }
   }
 
-  const unit = all.filter(f => !isIntegrationFile(f) || ALLOW_INTEGRATION);
-  const skipped = all.filter(f => isIntegrationFile(f) && !ALLOW_INTEGRATION);
+  const unit = all.filter((f) => !isIntegrationFile(f) || ALLOW_INTEGRATION);
+  const skipped = all.filter((f) => isIntegrationFile(f) && !ALLOW_INTEGRATION);
 
   console.log(`Found ${all.length} test file(s). Running ${unit.length}.`);
   if (skipped.length) {

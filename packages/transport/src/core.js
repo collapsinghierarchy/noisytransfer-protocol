@@ -6,8 +6,10 @@
  * @property {(cb:(ev:{code:number,reason?:string})=>void)=>()=>void} onClose
  */
 export function isTransport(obj) {
-  return obj
-    && typeof obj.send      === "function"
-    && typeof obj.onMessage === "function"
-    && typeof obj.close     === "function";
+  return (
+    obj &&
+    typeof obj.send === "function" &&
+    typeof obj.onMessage === "function" &&
+    typeof obj.close === "function"
+  );
 }

@@ -1,4 +1,4 @@
-import { u32be } from './serial.js';
+import { u32be } from "./serial.js";
 
 export function asU8(x) {
   if (x instanceof Uint8Array) return x;
@@ -6,7 +6,7 @@ export function asU8(x) {
     return new Uint8Array(x.buffer, x.byteOffset, x.byteLength);
   }
   if (x instanceof ArrayBuffer) return new Uint8Array(x);
-  if (ArrayBuffer.isView(x))    return new Uint8Array(x.buffer, x.byteOffset, x.byteLength);
+  if (ArrayBuffer.isView(x)) return new Uint8Array(x.buffer, x.byteOffset, x.byteLength);
   return new Uint8Array(0);
 }
 
@@ -52,7 +52,7 @@ export function lpConcat(parts) {
 }
 
 export function toHex(u8) {
-  let s = '';
+  let s = "";
   for (let i = 0; i < u8.length; i++) s += (u8[i] >>> 4).toString(16) + (u8[i] & 15).toString(16);
   return s;
 }

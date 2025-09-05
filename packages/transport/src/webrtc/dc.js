@@ -8,18 +8,53 @@ import {
   hardCloseRTC,
 } from "./rtc-utils.js";
 
-/** Resolve when the DataChannel TX buffer is empty. */
 export function waitForDrain(dc) {
-  return new Promise((res) => {
-    if (!dc || dc.readyState !== "open" || dc.bufferedAmount === 0) return res();
-    dc.bufferedAmountLowThreshold = 0;
-    const h = () => {
+  return new Promise((resolve) => {
+    if (!dc || dc.readyState !== "open" || dc.bufferedAmount === 0) return resolve();
+
+    const cleanup = () => {
+      try {
+        dc.removeEventListener?.("bufferedamountlow", onLow);
+      } catch {}
+      try {
+        dc.removeEventListener?.("close", onClose);
+      } catch {}
+      try {
+        dc.onbufferedamountlow = null;
+      } catch {}
+    };
+
+    const onClose = () => {
+      cleanup();
+      resolve();
+    };
+    const onLow = () => {
       if (dc.bufferedAmount === 0) {
-        dc.removeEventListener("bufferedamountlow", h);
-        res();
+        cleanup();
+        resolve();
       }
     };
-    dc.addEventListener("bufferedamountlow", h);
+
+    try {
+      dc.addEventListener?.("close", onClose);
+    } catch {}
+    try {
+      dc.bufferedAmountLowThreshold = 0;
+      dc.addEventListener?.("bufferedamountlow", onLow);
+    } catch {
+      // Fall through to polling if event registration fails
+    }
+
+    // Polling safety net in Node
+    let alive = true;
+    (async () => {
+      while (alive) {
+        if (!dc || dc.readyState !== "open" || dc.bufferedAmount === 0) break;
+        await new Promise((r) => setTimeout(r, 10));
+      }
+      cleanup();
+      resolve();
+    })();
   });
 }
 
@@ -28,7 +63,7 @@ export function wrapDataChannel(dc, pc, side = "") {
   dc.binaryType = "arraybuffer";
 
   // ---- event fanout (up/down/close) ----
-  let isUp = (dc.readyState === "open");
+  let isUp = dc.readyState === "open";
   const ups = new Set();
   const downs = new Set();
   const closes = new Set();
@@ -37,7 +72,11 @@ export function wrapDataChannel(dc, pc, side = "") {
   const unOpen = addEvt(dc, "open", () => {
     if (!isUp) {
       isUp = true;
-      for (const cb of ups) { try { cb(); } catch {} }
+      for (const cb of ups) {
+        try {
+          cb();
+        } catch {}
+      }
     }
   });
 
@@ -45,36 +84,73 @@ export function wrapDataChannel(dc, pc, side = "") {
     // treat errors as "down" signals if we were up
     if (isUp) {
       isUp = false;
-      for (const cb of downs) { try { cb(); } catch {} }
+      for (const cb of downs) {
+        try {
+          cb();
+        } catch {}
+      }
     }
   });
 
   const unClose = addEvt(dc, "close", () => {
     if (isUp) {
       isUp = false;
-      for (const cb of downs) { try { cb(); } catch {} }
+      for (const cb of downs) {
+        try {
+          cb();
+        } catch {}
+      }
     }
-    for (const cb of closes) { try { cb(); } catch {} }
+    for (const cb of closes) {
+      try {
+        cb();
+      } catch {}
+    }
   });
 
   const unConn = addEvt(pc, "connectionstatechange", () => {
     const st = pc.connectionState;
     if ((st === "disconnected" || st === "failed") && isUp) {
       isUp = false;
-      for (const cb of downs) { try { cb(); } catch {} }
+      for (const cb of downs) {
+        try {
+          cb();
+        } catch {}
+      }
     }
     if (st === "closed") {
-      for (const cb of closes) { try { cb(); } catch {} }
+      for (const cb of closes) {
+        try {
+          cb();
+        } catch {}
+      }
     }
   });
 
   function cleanupListeners() {
-    try { unOpen?.(); } catch {}
-    try { unError?.(); } catch {}
-    try { unClose?.(); } catch {}
-    try { unConn?.(); } catch {}
-    try { for (const un of msgUnsubs) { try { un(); } catch {} } msgUnsubs.clear(); } catch {}
-    try { dc.onmessage = null; } catch {}
+    try {
+      unOpen?.();
+    } catch {}
+    try {
+      unError?.();
+    } catch {}
+    try {
+      unClose?.();
+    } catch {}
+    try {
+      unConn?.();
+    } catch {}
+    try {
+      for (const un of msgUnsubs) {
+        try {
+          un();
+        } catch {}
+      }
+      msgUnsubs.clear();
+    } catch {}
+    try {
+      dc.onmessage = null;
+    } catch {}
   }
 
   // ---- DTLS fingerprint helpers expected by tests ----
@@ -91,7 +167,7 @@ export function wrapDataChannel(dc, pc, side = "") {
     features: {
       durableOrdered: true,
       ordered: !!dc.ordered,
-      reliable: (dc.maxPacketLifeTime == null && dc.maxRetransmits == null),
+      reliable: dc.maxPacketLifeTime == null && dc.maxRetransmits == null,
       // kept for backwards-compat; prefers SHA-256 from remote SDP
       peerFingerprints: () => {
         const sdp = pc.remoteDescription?.sdp || pc.currentRemoteDescription?.sdp || "";
@@ -99,15 +175,32 @@ export function wrapDataChannel(dc, pc, side = "") {
       },
     },
 
-    get isUp() { return isUp; },
+    get isUp() {
+      return isUp;
+    },
+    get bufferedAmount() {
+      try {
+        return typeof dc?.bufferedAmount === "number" ? dc.bufferedAmount : 0;
+      } catch {
+        return 0;
+      }
+    },
+    async flush() {
+      try {
+        await waitForDrain(dc);
+      } catch {}
+    },
 
     getLocalFingerprint,
     getRemoteFingerprint,
     send: (data) => {
       if (isByteLike(data)) {
         const u8 = asU8(data);
-        try { dc.send(u8); }
-        catch { dc.send(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength)); }
+        try {
+          dc.send(u8);
+        } catch {
+          dc.send(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength));
+        }
         return;
       }
       dc.send(JSON.stringify(data, binReplacer));
@@ -117,26 +210,55 @@ export function wrapDataChannel(dc, pc, side = "") {
       const un = addEvt(dc, "message", (ev) => {
         let payload = null;
         if (typeof ev.data === "string") payload = JSON.parse(ev.data, binReviver);
-        else                             payload = asU8(ev.data);
+        else payload = asU8(ev.data);
         cb(payload);
       });
       msgUnsubs.add(un);
-      return () => { try { un(); } finally { msgUnsubs.delete(un); } };
+      return () => {
+        try {
+          un();
+        } finally {
+          msgUnsubs.delete(un);
+        }
+      };
     },
 
-    onUp:    (cb) => { ups.add(cb);    return () => ups.delete(cb); },
-    onDown:  (cb) => { downs.add(cb);  return () => downs.delete(cb); },
-    onClose: (cb) => { closes.add(cb); return () => closes.delete(cb); },
+    onUp: (cb) => {
+      ups.add(cb);
+      if (isUp) {
+        try {
+          cb();
+        } catch {}
+      }
+      return () => ups.delete(cb);
+    },
+    onDown: (cb) => {
+      downs.add(cb);
+      if (!isUp) {
+        try {
+          cb();
+        } catch {}
+      }
+      return () => downs.delete(cb);
+    },
+    onClose: (cb) => {
+      closes.add(cb);
+      if (!isUp) {
+        try {
+          cb();
+        } catch {}
+      }
+      return () => closes.delete(cb);
+    },
 
-   close: async (code = 1000, reason = "app_close") => {
+    close: async (code = 1000, reason = "app_close") => {
       cleanupListeners();
       try {
         if (dc && dc.readyState === "open") {
-          try { dc.bufferedAmountLowThreshold = 0; } catch {}
-          await Promise.race([
-            waitForDrain(dc),
-            new Promise(r => setTimeout(r, 200))
-          ]);
+          try {
+            dc.bufferedAmountLowThreshold = 0;
+          } catch {}
+          await Promise.race([waitForDrain(dc), new Promise((r) => setTimeout(r, 200))]);
         }
       } catch {}
       await hardCloseRTC(pc, { dc });

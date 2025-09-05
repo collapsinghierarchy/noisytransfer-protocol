@@ -11,7 +11,16 @@ import regexp from "eslint-plugin-regexp";
 
 export default [
   // Ignore junk (now also ignoring scripts/**)
-  { ignores: ["**/node_modules/**","**/dist/**","**/coverage/**","**/.turbo/**","**/.changeset/**","scripts/**"] },
+  {
+    ignores: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "**/.turbo/**",
+      "**/.changeset/**",
+      "scripts/**",
+    ],
+  },
 
   // Runtime sources (isomorphic: Node + browser + WebRTC)
   {
@@ -43,17 +52,23 @@ export default [
       ...n.configs["recommended-module"].rules,
       ...promise.configs.recommended.rules,
 
-      "import/order": ["warn", {
-        "newlines-between": "always",
-        alphabetize: { order: "asc", caseInsensitive: true },
-        groups: [["builtin","external"], "internal", ["parent","sibling","index"]],
-      }],
+      "import/order": [
+        "warn",
+        {
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true },
+          groups: [["builtin", "external"], "internal", ["parent", "sibling", "index"]],
+        },
+      ],
 
       "no-empty": ["warn", { allowEmptyCatch: true }],
       "promise/param-names": "off",
       "n/no-unsupported-features/node-builtins": "off",
       "n/no-missing-import": "off",
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true }],
+      "no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true },
+      ],
     },
   },
 

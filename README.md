@@ -6,7 +6,6 @@
 
 > Experimental monorepo of cryptographic WebRTC and websocket transport primitives.
 
-
 ## Packages
 
 - `@noisytransfer/crypto` – cryptographic primitives (hashing, AEAD, HPKE, SAS).
@@ -34,4 +33,5 @@ For the tests you will need a running localhost backend e.g. [noisytransfer back
 > APIs are unstable and may change without notice.
 
 ## Notice on WebRTC Tests
+
 Some webRTC integration tests inside noisyauth and noisystream have a connection teardown bug, because of which the tests are failing.

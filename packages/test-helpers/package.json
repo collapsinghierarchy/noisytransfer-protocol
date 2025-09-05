@@ -1,0 +1,11 @@
+{
+  "name": "@noisytransfer/test-helpers",
+  "version": "0.2.1",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "devDependencies": {
+    "@noisytransfer/transport": "^0.2.1",
+    "ws": "^8.18.0"
+  }
+}

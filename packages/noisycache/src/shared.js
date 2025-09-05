@@ -1,6 +1,5 @@
-import { CACHE } from '@noisytransfer/constants';
-import { b64u } from '@noisytransfer/util/base64';
-
+import { CACHE } from "@noisytransfer/constants";
+import { b64u } from "@noisytransfer/util/base64";
 
 // Shared constants and helpers for the noisycache courier.
 export const FRAME_TYPE = CACHE.FRAME_TYPE;
@@ -16,7 +15,7 @@ export function makeCourierFrame({ sessionId, enc, ct, sig }) {
     type: FRAME_TYPE,
     sessionId,
     enc: b64u(enc),
-    ct:  b64u(ct),
+    ct: b64u(ct),
     sig: b64u(sig),
     sigAlg: CACHE.SIG_ALG,
   };
@@ -24,6 +23,10 @@ export function makeCourierFrame({ sessionId, enc, ct, sig }) {
 
 /** Guard for courier frame */
 export const isCourierFrame = (o) =>
-  o && o.type === FRAME_TYPE && typeof o.sessionId === 'string'
-  && typeof o.enc === 'string' && typeof o.ct === 'string'
-  && typeof o.sig === 'string' && o.sigAlg === CACHE.SIG_ALG;
+  o &&
+  o.type === FRAME_TYPE &&
+  typeof o.sessionId === "string" &&
+  typeof o.enc === "string" &&
+  typeof o.ct === "string" &&
+  typeof o.sig === "string" &&
+  o.sigAlg === CACHE.SIG_ALG;

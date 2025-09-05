@@ -5,24 +5,36 @@ export function makeScope() {
 
   return {
     signal: ac.signal,
-    addUnsub(fn) { if (typeof fn === "function") unsubs.add(fn); return fn; },
+    addUnsub(fn) {
+      if (typeof fn === "function") unsubs.add(fn);
+      return fn;
+    },
     teardown(reason) {
       if (tornDown) return;
       tornDown = true;
-      try { ac.abort(reason ?? new Error("aborted")); } catch {}
-      for (const u of [...unsubs]) { try { u(); } catch {} unsubs.delete(u); }
+      try {
+        ac.abort(reason ?? new Error("aborted"));
+      } catch {}
+      for (const u of [...unsubs]) {
+        try {
+          u();
+        } catch {}
+        unsubs.delete(u);
+      }
     },
   };
 }
 
 // small helpers
 export function throwIfAborted(signal) {
-  if (signal.aborted) throw (signal.reason ?? new Error("aborted"));
+  if (signal.aborted) throw signal.reason ?? new Error("aborted");
 }
 export function raceAbort(p, signal) {
   if (signal.aborted) return Promise.reject(signal.reason);
   return Promise.race([
     p,
-    new Promise((_, rej) => signal.addEventListener("abort", () => rej(signal.reason), { once:true })),
+    new Promise((_, rej) =>
+      signal.addEventListener("abort", () => rej(signal.reason), { once: true })
+    ),
   ]);
 }

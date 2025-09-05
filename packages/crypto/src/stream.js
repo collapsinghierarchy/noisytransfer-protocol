@@ -1,16 +1,13 @@
 // src/crypto/stream.js
 
-import { STREAM } from '@noisytransfer/constants';
+import { STREAM } from "@noisytransfer/constants";
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { withTimeout } from "@noisytransfer/util/async";
 import { b64u } from "@noisytransfer/util/base64";
 import { asU8 } from "@noisytransfer/util/buffer";
 
 import { makeEncryptor, makeDecryptor } from "./aead.js";
-import {
-  createSenderSession,
-  createReceiverSession,
-} from "./handshake.js";
+import { createSenderSession, createReceiverSession } from "./handshake.js";
 
 /**
  * Build a symmetric stream context derived from HPKE via the **exporter**.
@@ -39,7 +36,10 @@ export async function mkAeadStreamFromHpke(role, peerMaterial, ownPriv, opts = {
         10_000
       );
     } else {
-      throw new NoisyError({ code: "NC_BAD_PARAM", message: `mkAeadStreamFromHpke: unknown role "${role}"` });
+      throw new NoisyError({
+        code: "NC_BAD_PARAM",
+        message: `mkAeadStreamFromHpke: unknown role "${role}"`,
+      });
     }
   } catch (e) {
     throw new NoisyError({ code: "NC_BAD_PARAM", message: `Session creation error: ${e.message}` });
@@ -54,14 +54,12 @@ export async function mkAeadStreamFromHpke(role, peerMaterial, ownPriv, opts = {
   }
 
   // 3) Derive symmetric key & baseIV via exporter
-  const LABEL = new TextEncoder().encode(
-    role === "sender" ? STREAM.LABEL_S2R : STREAM.LABEL_R2S
-  );
+  const LABEL = new TextEncoder().encode(role === "sender" ? STREAM.LABEL_S2R : STREAM.LABEL_R2S);
   const KM_LEN = 32 + 12; // AES-256 key + 96-bit IV
   const km = await sess.exportSecret(LABEL, KM_LEN);
   const kmU8 = km instanceof Uint8Array ? km : new Uint8Array(km);
-  const key   = kmU8.slice(0, 32);
-  const baseIV= kmU8.slice(32, 44);
+  const key = kmU8.slice(0, 32);
+  const baseIV = kmU8.slice(32, 44);
 
   // 4) Choose AAD stream id (stable across both sides)
   //    We use 'enc' only for ID (AAD), not for keying.
@@ -77,7 +75,9 @@ export async function mkAeadStreamFromHpke(role, peerMaterial, ownPriv, opts = {
     }
     return {
       seal,
-      open: async () => { throw new NoisyError({ code: "NC_PROTOCOL", message: "sender cannot open" }); },
+      open: async () => {
+        throw new NoisyError({ code: "NC_PROTOCOL", message: "sender cannot open" });
+      },
       enc: sess.enc,
       id,
     };
@@ -89,7 +89,9 @@ export async function mkAeadStreamFromHpke(role, peerMaterial, ownPriv, opts = {
     }
     return {
       open,
-      seal: async () => { throw new NoisyError({ code: "NC_PROTOCOL", message: "receiver cannot seal" }); },
+      seal: async () => {
+        throw new NoisyError({ code: "NC_PROTOCOL", message: "receiver cannot seal" });
+      },
       id,
     };
   }

@@ -5,33 +5,44 @@ export function validateManifest(m: any): void;
 export function ctLenOfChunk(i: any, m: any): any;
 export function ctTotalBytes(m: any): any;
 export function ctOffsetOfChunk(i: any, m: any): number;
-export function makeManifest({ aead, tagBytes, chunkBytes, totalBytes, counterStart, context, encTag, cipherDigest, finSigAlg, finSignature }: {
-    aead?: string;
-    tagBytes?: number;
-    chunkBytes: any;
-    totalBytes: any;
-    counterStart?: number;
-    context?: {};
-    encTag?: string;
-    cipherDigest?: string;
-    finSigAlg?: string;
-    finSignature?: string;
+export function makeManifest({
+  aead,
+  tagBytes,
+  chunkBytes,
+  totalBytes,
+  counterStart,
+  context,
+  encTag,
+  cipherDigest,
+  finSigAlg,
+  finSignature,
+}: {
+  aead?: string;
+  tagBytes?: number;
+  chunkBytes: any;
+  totalBytes: any;
+  counterStart?: number;
+  context?: {};
+  encTag?: string;
+  cipherDigest?: string;
+  finSigAlg?: string;
+  finSignature?: string;
 }): {
-    version: number;
-    aead: string;
-    tagBytes: number;
+  version: number;
+  aead: string;
+  tagBytes: number;
+  chunkBytes: any;
+  totalBytes: any;
+  totalChunks: number;
+  lastChunkPlaintextBytes: number;
+  counterStart: number;
+  encTag: string;
+  cipherDigest: string;
+  finSigAlg: string;
+  finSignature: string;
+  context: {
     chunkBytes: any;
-    totalBytes: any;
-    totalChunks: number;
-    lastChunkPlaintextBytes: number;
     counterStart: number;
-    encTag: string;
-    cipherDigest: string;
-    finSigAlg: string;
-    finSignature: string;
-    context: {
-        chunkBytes: any;
-        counterStart: number;
-        aead: string;
-    };
+    aead: string;
+  };
 };

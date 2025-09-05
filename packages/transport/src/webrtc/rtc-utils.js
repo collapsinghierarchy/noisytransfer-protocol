@@ -27,7 +27,7 @@ export function shouldAcceptCandidate(cand, { allowTcp = true, allowLoopbackV6 =
 export function parseDtlsFingerprintsFromSdp(sdp) {
   if (!sdp || typeof sdp !== "string") return [];
   // a=fingerprint:SHA-256 AB:CD:EF:...
-  const re = /^a=fingerprint:\s*([A-Za-z0-9-]+)\s+([0-9A-Fa-f:]+)\s*$/gmi;
+  const re = /^a=fingerprint:\s*([A-Za-z0-9-]+)\s+([0-9A-Fa-f:]+)\s*$/gim;
   const out = [];
   let m;
   while ((m = re.exec(sdp))) {
@@ -43,9 +43,15 @@ export function parseDtlsFingerprintsFromSdp(sdp) {
   return out;
 }
 
-export function pickPreferredFingerprintFromSdp(sdp, preferred = ["SHA-256","SHA-384","SHA-512"]) {
+export function pickPreferredFingerprintFromSdp(
+  sdp,
+  preferred = ["SHA-256", "SHA-384", "SHA-512"]
+) {
   const list = parseDtlsFingerprintsFromSdp(sdp);
-  for (const p of preferred) { const hit = list.find(f => f.alg === p); if (hit) return hit; }
+  for (const p of preferred) {
+    const hit = list.find((f) => f.alg === p);
+    if (hit) return hit;
+  }
   return list[0] || null;
 }
 
@@ -78,32 +84,50 @@ export async function hardCloseRTC(pc, { dc, timeout = 300 } = {}) {
       } catch {}
     }
     // Stop any tracks/transceivers (we don’t create tracks, but harmless)
-    try { pc?.getSenders?.().forEach(s => s.track && s.track.stop && s.track.stop()); } catch {}
-    try { pc?.getTransceivers?.().forEach(t => t.stop && t.stop()); } catch {}
+    try {
+      pc?.getSenders?.().forEach((s) => s.track && s.track.stop && s.track.stop());
+    } catch {}
+    try {
+      pc?.getTransceivers?.().forEach((t) => t.stop && t.stop());
+    } catch {}
     // Close the PC
-    try { pc?.close?.(); } catch {}
+    try {
+      pc?.close?.();
+    } catch {}
 
     // Wait a tick for wrtc to release timers/sockets
-    await new Promise(r => setTimeout(r, timeout));
+    await new Promise((r) => setTimeout(r, timeout));
   } catch {}
 }
 
-export async function dialRtcUntilReady({ role, signal, rtcCfg = {}, maxAttempts = 3, backoffMs = 200 }) {
+export async function dialRtcUntilReady({
+  role,
+  signal,
+  rtcCfg = {},
+  maxAttempts = 3,
+  backoffMs = 200,
+}) {
   let lastErr;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     let raw;
     try {
-      raw = role === "initiator" ? await rtcInitiator(signal, rtcCfg)
-                                 : await rtcResponder(signal, rtcCfg);
+      raw =
+        role === "initiator"
+          ? await rtcInitiator(signal, rtcCfg)
+          : await rtcResponder(signal, rtcCfg);
       return { tx: raw, attempt };
     } catch (err) {
       lastErr = err;
       if (err?.code === "TRANSPORT_LOST_PRE_READY") {
-        try { raw?.close?.(); } catch {}
-        await new Promise(r => setTimeout(r, backoffMs * attempt));
+        try {
+          raw?.close?.();
+        } catch {}
+        await new Promise((r) => setTimeout(r, backoffMs * attempt));
         continue;
       }
-      try { raw?.close?.(); } catch {}
+      try {
+        raw?.close?.();
+      } catch {}
       throw err;
     }
   }

@@ -1,4 +1,4 @@
-import { BINARY_FIELDS } from "@noisytransfer/constants"
+import { BINARY_FIELDS } from "@noisytransfer/constants";
 
 const HAS_BUFFER = typeof Buffer !== "undefined" && typeof Buffer.from === "function";
 
@@ -8,7 +8,7 @@ function u8ToBase64(u8) {
   const CHUNK = 0x8000;
   let bin = "";
   for (let i = 0; i < u8.length; i += CHUNK) {
-    bin += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i+CHUNK, u8.length)));
+    bin += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + CHUNK, u8.length)));
   }
   return btoa(bin);
 }
@@ -22,10 +22,7 @@ function base64ToU8(b64) {
 }
 
 export function binReplacer(key, value) {
-  if (
-    BINARY_FIELDS.has(key) &&
-    (value instanceof Uint8Array || value instanceof ArrayBuffer)
-  ) {
+  if (BINARY_FIELDS.has(key) && (value instanceof Uint8Array || value instanceof ArrayBuffer)) {
     const u8 = value instanceof Uint8Array ? value : new Uint8Array(value);
     return { __bin__: true, data: u8ToBase64(u8) };
   }

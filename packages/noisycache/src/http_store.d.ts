@@ -58,11 +58,11 @@ export class HttpStore {
         end: any;
         signal: any;
     }): Promise<{
-        bytes: any;
+        bytes: Uint8Array<any> | Buffer<any>;
         contentRange: any;
     }>;
     get({ objectId, signal }: {
         objectId: any;
         signal: any;
-    }): Promise<any>;
+    }): Promise<Uint8Array<any> | Buffer<any>>;
 }

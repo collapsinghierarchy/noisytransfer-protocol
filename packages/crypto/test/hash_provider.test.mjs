@@ -1,11 +1,11 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
-import { sha256, sha3_256, shake128, toHex, constantTimeEqual } from '@noisytransfer/crypto';
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { sha256, sha3_256, shake128, toHex, constantTimeEqual } from "@noisytransfer/crypto";
 import { webcrypto } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 
-test('hash provider basics', async () => {
-  const a = new TextEncoder().encode('abc');
+test("hash provider basics", async () => {
+  const a = new TextEncoder().encode("abc");
   const h1 = await sha256(a);
   const h2 = await sha3_256(a); // equal to sha3('abc') if noble is present; != sha256 otherwise
   assert.equal(h1.length, 32);

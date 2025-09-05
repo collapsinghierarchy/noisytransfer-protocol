@@ -14,10 +14,7 @@ export async function withTimeout(promise, label, ms = 10000) {
     return await Promise.race([
       promise,
       new Promise((_, rej) => {
-        timerId = setTimeout(
-         () => rej(new Error(`${label} timed out after ${ms}ms`)),
-          ms,
-        );
+        timerId = setTimeout(() => rej(new Error(`${label} timed out after ${ms}ms`)), ms);
       }),
     ]);
   } finally {

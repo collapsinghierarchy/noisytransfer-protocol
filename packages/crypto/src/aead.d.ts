@@ -10,17 +10,23 @@ export function deriveIv(baseIV: any, idx: any): Uint8Array<any>;
  * - baseIV: 12-byte Uint8Array (exported so it can be included in KeyPacket)
  * - seal(id, idx, pt): returns ciphertext+tag (Uint8Array)
  */
-export function makeEncryptor(keyBytes: any, baseIV?: Uint8Array<ArrayBuffer>): Promise<{
-    alg: string;
-    baseIV: Uint8Array<ArrayBuffer>;
-    seal: (id: any, idx: any, pt: any) => Promise<Uint8Array<ArrayBuffer>>;
-    encryptChunk: (id: any, idx: any, pt: any) => Promise<Uint8Array<ArrayBuffer>>;
+export function makeEncryptor(
+  keyBytes: any,
+  baseIV?: Uint8Array<ArrayBuffer>
+): Promise<{
+  alg: string;
+  baseIV: Uint8Array<ArrayBuffer>;
+  seal: (id: any, idx: any, pt: any) => Promise<Uint8Array<ArrayBuffer>>;
+  encryptChunk: (id: any, idx: any, pt: any) => Promise<Uint8Array<ArrayBuffer>>;
 }>;
 /**
  * Create a decryptor compatible with makeEncryptor.
  * - open(id, idx, ct): returns plaintext (Uint8Array) or throws NoisyError
  */
-export function makeDecryptor(keyBytes: any, baseIV: any): Promise<{
-    open: (id: any, idx: any, ct: any) => Promise<Uint8Array<ArrayBuffer>>;
-    decryptChunk: (id: any, idx: any, ct: any) => Promise<Uint8Array<ArrayBuffer>>;
+export function makeDecryptor(
+  keyBytes: any,
+  baseIV: any
+): Promise<{
+  open: (id: any, idx: any, ct: any) => Promise<Uint8Array<ArrayBuffer>>;
+  decryptChunk: (id: any, idx: any, ct: any) => Promise<Uint8Array<ArrayBuffer>>;
 }>;

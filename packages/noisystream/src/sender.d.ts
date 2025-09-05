@@ -7,7 +7,13 @@
  *   chunkBytes?: number,               // default 64 KiB
  *   encTag?: Uint8Array|ArrayBuffer|null, // optional, echoed in ns_init
  *   onProgress?:(sent:number,total:number)=>void,
- *   abortSignal?: AbortSignal
+ *   abortSignal?: AbortSignal,
+ *   // optional behaviors (default: off)
+ *   finAck?: boolean,
+ *   finAckTimeoutMs?: number,
+ *   finAckMaxRetries?: number,
+ *   finAckBackoffMs?: number,
+ *   adaptiveChunking?: boolean,
  * }} SendOpts
  */
 /**
@@ -16,22 +22,35 @@
  * @param {SendOpts} opts
  */
 export function sendFileWithAuth(opts: SendOpts): Promise<{
-    ok: boolean;
-    bytesSent: number;
-    frames: number;
+  ok: boolean;
+  bytesSent: number;
+  frames: number;
 }>;
-export type SendOpts = {
-    tx: {
-        send: (f: any) => void;
-        onMessage: (cb: (f: any) => void) => () => void;
-        onClose?: (cb: () => void) => () => void;
-        close?: (...a: any[]) => void;
-    };
-    sessionId: string;
-    source: Uint8Array | ArrayBuffer | Blob | AsyncIterable<Uint8Array | ArrayBuffer> | Iterable<Uint8Array | ArrayBuffer>;
-    totalBytes?: number;
-    chunkBytes?: number;
-    encTag?: Uint8Array | ArrayBuffer | null;
-    onProgress?: (sent: number, total: number) => void;
-    abortSignal?: AbortSignal;
+/**
+ * ?: boolean,
+ *   finAckTimeoutMs?: number,
+ *   finAckMaxRetries?: number,
+ *   finAckBackoffMs?: number,
+ *   adaptiveChunking?: boolean,
+ * }} SendOpts
+ */
+export type finAck = {
+  tx: {
+    send: (f: any) => void;
+    onMessage: (cb: (f: any) => void) => () => void;
+    onClose?: (cb: () => void) => () => void;
+    close?: (...a: any[]) => void;
+  };
+  sessionId: string;
+  source:
+    | Uint8Array
+    | ArrayBuffer
+    | Blob
+    | AsyncIterable<Uint8Array | ArrayBuffer>
+    | Iterable<Uint8Array | ArrayBuffer>;
+  totalBytes?: number;
+  chunkBytes?: number;
+  encTag?: Uint8Array | ArrayBuffer | null;
+  onProgress?: (sent: number, total: number) => void;
+  abortSignal?: AbortSignal;
 };

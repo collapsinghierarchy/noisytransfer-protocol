@@ -12,8 +12,17 @@ export async function makeReceiverKemKeys() {
 }
 
 export async function importSenderVkFromMsgS(msgS_spki) {
-  const u8 = typeof msgS_spki === "string"
-    ? Uint8Array.from(Buffer.from(msgS_spki.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((msgS_spki.length+3)%4), "base64"))
-    : new Uint8Array(msgS_spki);
-  return crypto.subtle.importKey("spki", u8, { name: "RSA-PSS", hash: "SHA-256" }, true, ["verify"]);
+  const u8 =
+    typeof msgS_spki === "string"
+      ? Uint8Array.from(
+          Buffer.from(
+            msgS_spki.replace(/-/g, "+").replace(/_/g, "/") +
+              "===".slice((msgS_spki.length + 3) % 4),
+            "base64"
+          )
+        )
+      : new Uint8Array(msgS_spki);
+  return crypto.subtle.importKey("spki", u8, { name: "RSA-PSS", hash: "SHA-256" }, true, [
+    "verify",
+  ]);
 }

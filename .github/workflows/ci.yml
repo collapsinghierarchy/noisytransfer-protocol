@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "**" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "**" ]
+    branches: ["**"]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,33 +13,40 @@ concurrency:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        node: [18.x, 20.x]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node ${{ matrix.node }}
+      - name: Setup Node (from .nvmrc) + npm cache
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version-file: .nvmrc
           cache: npm
 
-      - name: Show versions
+      - name: Print tool versions
         run: |
           node -v
           npm -v
 
-      - name: Install
+      - name: Install deps
         run: npm ci
 
       - name: Lint
         run: npm run lint
 
-      - name: Tests (workspace)
-        run: npm run test:ci
+      # ---- Unit tests (exclude rtc/webrtc/dtls via run-tests-ci.mjs)
+      - name: Unit tests
+        run: npm run test:spec
+
+      # ---- RTC tests (memory signaler) via run-webrtc.mjs
+      - name: RTC tests
+        env:
+          CI_ALLOW_INTEGRATION: "1"
+          TEST_SIGNAL_MODE: "memory"
+          # Optional: extend the safety valve if CI is slow
+          WRTC_TEST_MAX_MS: "45000"
+        run: npm run test:ci:webrtc
 
       - name: Pack dry-run (workspace)
         run: npm run pack:dry

@@ -3,9 +3,14 @@
  *
  * Stable API: runCourierReceiver({ tx, sessionId, recvMsg, recipientPrivateKey })
  */
-export function runCourierReceiver({ tx, sessionId, recvMsg, recipientPrivateKey }: {
-    tx: any;
-    sessionId: any;
-    recvMsg: any;
-    recipientPrivateKey: any;
+export function runCourierReceiver({
+  tx,
+  sessionId,
+  recvMsg,
+  recipientPrivateKey,
+}: {
+  tx: any;
+  sessionId: any;
+  recvMsg: any;
+  recipientPrivateKey: any;
 }): Promise<any>;

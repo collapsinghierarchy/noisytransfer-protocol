@@ -1,5 +1,4 @@
-import { createVerify as nodeCreateVerify } from 'node:crypto';
-
+import { createVerify as nodeCreateVerify } from "node:crypto";
 
 /**
  * Generate an ephemeral RSA-PSS key pair for signing/verifying.
@@ -31,23 +30,15 @@ export async function genRSAPSS() {
  */
 export async function signChunk(signingKey, data) {
   const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
-  const sig = await crypto.subtle.sign(
-    { name: "RSA-PSS", saltLength: 32 },
-    signingKey,
-    u8
-  );
+  const sig = await crypto.subtle.sign({ name: "RSA-PSS", saltLength: 32 }, signingKey, u8);
   return new Uint8Array(sig);
 }
 
 export async function importVerifyKey(spkiBytesU8) {
   const spki = spkiBytesU8 instanceof Uint8Array ? spkiBytesU8 : new Uint8Array(spkiBytesU8);
-  return crypto.subtle.importKey(
-    "spki",
-    spki,
-    { name: "RSA-PSS", hash: "SHA-256" },
-    true,
-    ["verify"]
-  );
+  return crypto.subtle.importKey("spki", spki, { name: "RSA-PSS", hash: "SHA-256" }, true, [
+    "verify",
+  ]);
 }
 
 /**
@@ -60,17 +51,11 @@ export async function importVerifyKey(spkiBytesU8) {
 export async function verifyChunk(verifyKey, signature, data) {
   const sig = signature instanceof Uint8Array ? signature : new Uint8Array(signature);
   const d = data instanceof Uint8Array ? data : new Uint8Array(data);
-  return crypto.subtle.verify(
-    { name: "RSA-PSS", saltLength: 32 },
-    verifyKey,
-    sig,
-    d
-  );
+  return crypto.subtle.verify({ name: "RSA-PSS", saltLength: 32 }, verifyKey, sig, d);
 }
-
 
 // Node helpers ---------------------------------------------------------------
 
 export function createRSAVerifier() {
-  return nodeCreateVerify('RSA-SHA256');
+  return nodeCreateVerify("RSA-SHA256");
 }

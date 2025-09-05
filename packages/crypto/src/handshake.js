@@ -23,7 +23,10 @@ function toU8(input) {
 export async function createSenderSession(receiverPublicKey) {
   const pkU8 = toU8(receiverPublicKey);
   if (pkU8.byteLength === 0) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: "crypto/handshake: receiver public key is empty" });
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: "crypto/handshake: receiver public key is empty",
+    });
   }
 
   let kemPK;
@@ -33,7 +36,7 @@ export async function createSenderSession(receiverPublicKey) {
     throw new NoisyError({
       code: "NC_BAD_PARAM",
       message: "crypto/handshake: failed to deserialize public key",
-      context: { error: e }
+      context: { error: e },
     });
   }
 
@@ -48,7 +51,7 @@ export async function createSenderSession(receiverPublicKey) {
     throw new NoisyError({
       code: "NC_BAD_PARAM",
       message: "crypto/handshake: failed to create sender context",
-      context: { error: e }
+      context: { error: e },
     });
   }
 
@@ -79,7 +82,10 @@ export async function createSenderSession(receiverPublicKey) {
 export async function createReceiverSession(encapsulation, recipientPrivateKey) {
   const encU8 = toU8(encapsulation);
   if (encU8.byteLength === 0) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: "crypto/handshake: encapsulation is empty" });
+    throw new NoisyError({
+      code: "NC_BAD_PARAM",
+      message: "crypto/handshake: encapsulation is empty",
+    });
   }
 
   let ctx;
@@ -93,7 +99,7 @@ export async function createReceiverSession(encapsulation, recipientPrivateKey) 
     throw new NoisyError({
       code: "NC_BAD_PARAM",
       message: "crypto/handshake: failed to create receiver context",
-      context: { error: e }
+      context: { error: e },
     });
   }
 

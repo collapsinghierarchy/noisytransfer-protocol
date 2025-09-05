@@ -4,15 +4,14 @@ import { binReplacer, binReviver } from "../ser.js";
 
 export function browserWSWithReconnect(
   url,
-  {
-    maxRetries = Infinity,
-    backoffMs = [250, 500, 1000, 2000, 5000],
-    protocols,
-    wsConstructor,
-  } = {}
+  { maxRetries = Infinity, backoffMs = [250, 500, 1000, 2000, 5000], protocols, wsConstructor } = {}
 ) {
   const WS = wsConstructor ?? globalThis.WebSocket;
-  if (!WS) throw new NoisyError({ code: "NC_PROTOCOL", message: "WebSocket unavailable (provide wsConstructor or set globalThis.WebSocket)" });
+  if (!WS)
+    throw new NoisyError({
+      code: "NC_PROTOCOL",
+      message: "WebSocket unavailable (provide wsConstructor or set globalThis.WebSocket)",
+    });
 
   let ws = null;
   let attempts = 0;
@@ -27,22 +26,41 @@ export function browserWSWithReconnect(
 
   const api = {
     isConnected: false,
-    onOpen(cb){ onOpen.add(cb); return () => onOpen.delete(cb); },
-    onUp(cb){ onUp.add(cb); return () => onUp.delete(cb); },
-    onDown(cb){ onDown.add(cb); return () => onDown.delete(cb); },
-    onClose(cb){ onClose.add(cb); return () => onClose.delete(cb); },
-    onMessage(cb){ onMessage.add(cb); return () => onMessage.delete(cb); },
+    onOpen(cb) {
+      onOpen.add(cb);
+      return () => onOpen.delete(cb);
+    },
+    onUp(cb) {
+      onUp.add(cb);
+      return () => onUp.delete(cb);
+    },
+    onDown(cb) {
+      onDown.add(cb);
+      return () => onDown.delete(cb);
+    },
+    onClose(cb) {
+      onClose.add(cb);
+      return () => onClose.delete(cb);
+    },
+    onMessage(cb) {
+      onMessage.add(cb);
+      return () => onMessage.delete(cb);
+    },
 
-    send(data){
-      const payload = (typeof data === "string" || data instanceof ArrayBuffer || ArrayBuffer.isView(data))
-        ? data
-        : JSON.stringify(data, binReplacer);
+    send(data) {
+      const payload =
+        typeof data === "string" || data instanceof ArrayBuffer || ArrayBuffer.isView(data)
+          ? data
+          : JSON.stringify(data, binReplacer);
       ws?.send?.(payload);
     },
 
-    close(code = 1000, reason = "closed"){
+    close(code = 1000, reason = "closed") {
       closedByApp = true;
-      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
       // detach listeners so no late callbacks get queued during shutdown
       try {
         ws?.removeEventListener?.("open", _open);
@@ -51,15 +69,25 @@ export function browserWSWithReconnect(
         ws?.removeEventListener?.("error", _err);
       } catch {}
       // request a clean close
-      try { ws?.close?.(code, reason); } catch {}
+      try {
+        ws?.close?.(code, reason);
+      } catch {}
       // if this is Node 'ws', terminate immediately to drop TCP
       if (ws && typeof ws.terminate === "function") {
-        try { ws.terminate(); } catch {}
+        try {
+          ws.terminate();
+        } catch {}
       }
     },
   };
 
-  const _emit = (set, ev) => { for (const f of set) { try { f(ev); } catch {} } };
+  const _emit = (set, ev) => {
+    for (const f of set) {
+      try {
+        f(ev);
+      } catch {}
+    }
+  };
 
   const scheduleReconnect = () => {
     if (closedByApp) return;
@@ -82,7 +110,11 @@ export function browserWSWithReconnect(
   };
   const _msg = (ev) => {
     let v = ev?.data;
-    if (typeof v === "string") { try { v = JSON.parse(v, binReviver); } catch {} }
+    if (typeof v === "string") {
+      try {
+        v = JSON.parse(v, binReviver);
+      } catch {}
+    }
     _emit(onMessage, v);
   };
   const _close = (ev) => {
@@ -91,11 +123,15 @@ export function browserWSWithReconnect(
     _emit(onClose, { code: ev?.code, reason: ev?.reason });
     if (!closedByApp) scheduleReconnect();
   };
-  const _err = () => { /* close/reconnect will handle */ };
+  const _err = () => {
+    /* close/reconnect will handle */
+  };
 
   function open() {
     if (closedByApp) return;
-    try { ws?.close?.(); } catch {}
+    try {
+      ws?.close?.();
+    } catch {}
     ws = new WS(url, protocols);
     ws.addEventListener?.("open", _open);
     ws.addEventListener?.("message", _msg);

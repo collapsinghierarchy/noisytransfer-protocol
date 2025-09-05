@@ -1,6 +1,6 @@
-export function createSHA256(): any;
+export function createSHA256(): import("crypto").Hash;
 /** SHA-256 via WebCrypto; returns Uint8Array */
-export function sha256(data: any): Promise<Uint8Array<any>>;
+export function sha256(data: any): Promise<Uint8Array<ArrayBuffer>>;
 /** Constant-time equality for byte-like inputs */
 export function constantTimeEqual(a: any, b: any): boolean;
 /** Hex helpers (tiny and dependency-free) */
@@ -11,3 +11,4 @@ export function sha3_256(data: any): Promise<any>;
 /** SHAKE128 XOF; falls back to SHA-256-based expander (deterministic PRF) */
 export function shake128(input: any, dkLen: any): Promise<any>;
 export { Readable };
+import { Readable } from "node:stream";

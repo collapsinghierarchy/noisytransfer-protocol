@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/noisycache",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -27,14 +27,14 @@
   },
   "devDependencies": {
     "ws": "^8.18.0",
-    "@noisytransfer/transport": "^0.2.0"
+    "@noisytransfer/transport": "^0.2.1"
   },
   "dependencies": {
-    "@noisytransfer/crypto": "^0.2.0",
-    "@noisytransfer/errors": "^0.2.0",
-    "@noisytransfer/util": "^0.2.0",
-    "@noisytransfer/noisyauth": "^0.2.0",
-    "@noisytransfer/constants": "^0.2.0"
+    "@noisytransfer/crypto": "^0.2.1",
+    "@noisytransfer/errors": "^0.2.1",
+    "@noisytransfer/util": "^0.2.1",
+    "@noisytransfer/noisyauth": "^0.2.1",
+    "@noisytransfer/constants": "^0.2.1"
   },
   "license": "AGPL-3.0-only",
   "publishConfig": {
