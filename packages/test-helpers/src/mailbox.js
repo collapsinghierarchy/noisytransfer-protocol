@@ -8,7 +8,6 @@
  // side-effect after imports
  globalThis.WebSocket = globalThis.WebSocket || WebSocket;
 
-
 // --- memory pair (fast, opaque) ---
 function makeMailboxMemoryPair() {
   const toA = new Set(),
