@@ -14,3 +14,4 @@ const { A, B } = await mkMailbox("https://mailbox.example.com", {
 await withSignalPair(async ({ A, B }) => {
   // use A/B as TxLike
 });
+```

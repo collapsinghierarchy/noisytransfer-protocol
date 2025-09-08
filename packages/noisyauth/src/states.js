@@ -1,4 +1,5 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
+import { logger } from "@noisytransfer/util";
 // Minimal FSM for auth-only (no data-transfer states)
 export const STATES = Object.freeze({
   IDLE: "IDLE",
@@ -50,19 +51,19 @@ export function nextState(role, cur, evt) {
   const T = role === "Sender" ? T_SENDER : T_RECEIVER;
 
   if ([STATES.ERROR, STATES.MALLORY, STATES.READY].includes(cur)) {
-    console.log(`${role}: ${cur} -> ${evt} => ${cur} (terminal/ready)`);
+    logger.debug(`${role}: ${cur} -> ${evt} => ${cur} (terminal/ready)`);
     return cur;
   }
   if (evt === "error") {
-    console.log(`${role}: ${cur} -> ${evt} => ${STATES.ERROR}`);
+    logger.debug(`${role}: ${cur} -> ${evt} => ${STATES.ERROR}`);
     return STATES.ERROR;
   }
   if (["bad_sig", "vrfyFail", "rejected"].includes(evt)) {
-    console.log(`${role}: ${cur} -> ${evt} => ${STATES.MALLORY}`);
+    logger.debug(`${role}: ${cur} -> ${evt} => ${STATES.MALLORY}`);
     return STATES.MALLORY;
   }
   const next = T[cur]?.[evt];
-  console.log(`${role}: ${cur} -> ${evt} => ${next}`);
+  logger.debug(`${role}: ${cur} -> ${evt} => ${next}`);
   if (!next)
     throw new NoisyError({
       code: "NC_PROTOCOL",

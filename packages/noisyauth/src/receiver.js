@@ -11,6 +11,7 @@ import { ReceiverFsm } from "./receiver_fsm.js";
 import { makeSessionCtx } from "./session.js";
 import { STATES } from "./states.js";
 import { timeoutsFor } from "./timeouts.js";
+import { logger } from "@noisytransfer/util";
 
 /** @typedef {import("./types").AuthHooks} AuthHooks */
 /** @typedef {import("./types").AuthReceiverOpts} AuthReceiverOpts */
@@ -173,7 +174,7 @@ export function createAuthReceiver(tx, hooks = {}, opts = {}) {
         offer: m,
         reveal, // our reveal
       });
-      console.log("receiver: computed SAS", sas);
+      logger.debug("receiver: SAS", sas);
       hooks.onSAS?.(sas);
       hooks.onSASHash?.(fullHashHex);
 

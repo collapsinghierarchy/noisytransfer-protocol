@@ -14,6 +14,7 @@ import { SenderFsm } from "./sender_fsm.js";
 import { makeSessionCtx } from "./session.js";
 import { STATES } from "./states.js";
 import { timeoutsFor } from "./timeouts.js";
+import { logger } from "@noisytransfer/util";
 
 /** @typedef {import("./types").AuthHooks} AuthHooks */
 /** @typedef {import("./types").AuthSenderOpts} AuthSenderOpts */
@@ -189,7 +190,7 @@ export function createAuthSender(tx, hooks = {}, opts = {}) {
         offer: myOffer,
         reveal: m,
       });
-      console.log("sender: computed SAS", sas);
+      logger.debug("sender: computed SAS", sas);
       hooks.onSAS?.(sas);
       hooks.onSASHash?.(fullHashHex);
 
