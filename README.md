@@ -1,8 +1,6 @@
 # NoisyTransfer Protocol
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](./LICENSE) [![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
-
-<!-- Replace <owner>/<repo> with your GitHub slug and 'ci.yml' with your workflow filename. -->
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](./LICENSE) [![CI](https://github.com/collapsinghierarchy/noisytransfer-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/collapsinghierarchy/noisytransfer-protocol/actions/workflows/ci.yml)
 
 > Experimental monorepo of cryptographic, WebRTC, and WebSocket transport primitives.
 
