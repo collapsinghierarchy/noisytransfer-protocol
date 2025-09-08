@@ -1,13 +1,15 @@
 # NoisyTransfer Protocol
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](./LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=flat-square)](./LICENSE) [![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
+
+<!-- Replace <owner>/<repo> with your GitHub slug and 'ci.yml' with your workflow filename. -->
 
 > Experimental monorepo of cryptographic, WebRTC, and WebSocket transport primitives.
 
 This README refresh focuses on:
 
 * Correct, working links to each published package on npm.
-* A clear overview table with live version & downloads badges.
+* A clear overview table with live version badges.
 * Quick install snippets.
 * Development & contribution instructions.
 * Known issues called out explicitly.
@@ -16,13 +18,13 @@ This README refresh focuses on:
 
 ## Packages
 
-| Package                                                                                  | Version                                                                               | Downloads                                                                              | What it is                                           |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| [`@noisytransfer/crypto`](https://www.npmjs.com/package/@noisytransfer/crypto)           | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fcrypto?style=flat-square)      | ![npm](https://img.shields.io/npm/dm/%40noisytransfer%2Fcrypto?style=flat-square)      | Cryptographic primitives (hashing, AEAD, HPKE, SAS). |
-| [`@noisytransfer/transport`](https://www.npmjs.com/package/@noisytransfer/transport)     | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Ftransport?style=flat-square)   | ![npm](https://img.shields.io/npm/dm/%40noisytransfer%2Ftransport?style=flat-square)   | WebSocket/WebRTC transport wrappers.                 |
-| [`@noisytransfer/noisystream`](https://www.npmjs.com/package/@noisytransfer/noisystream) | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fnoisystream?style=flat-square) | ![npm](https://img.shields.io/npm/dm/%40noisytransfer%2Fnoisystream?style=flat-square) | Frame-based streaming helpers.                       |
-| [`@noisytransfer/noisyauth`](https://www.npmjs.com/package/@noisytransfer/noisyauth)     | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fnoisyauth?style=flat-square)   | ![npm](https://img.shields.io/npm/dm/%40noisytransfer%2Fnoisyauth?style=flat-square)   | Authentication handshake state machines.             |
-| [`@noisytransfer/noisycache`](https://www.npmjs.com/package/@noisytransfer/noisycache)   | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fnoisycache?style=flat-square)  | ![npm](https://img.shields.io/npm/dm/%40noisytransfer%2Fnoisycache?style=flat-square)  | Caching and file-transfer utilities.                 |
+| Package                                                                                  | Version                                                                               | What it is                                           |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| [`@noisytransfer/crypto`](https://www.npmjs.com/package/@noisytransfer/crypto)           | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fcrypto?style=flat-square)      | Cryptographic primitives (hashing, AEAD, HPKE, SAS). |
+| [`@noisytransfer/transport`](https://www.npmjs.com/package/@noisytransfer/transport)     | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Ftransport?style=flat-square)   | WebSocket/WebRTC transport wrappers.                 |
+| [`@noisytransfer/noisystream`](https://www.npmjs.com/package/@noisytransfer/noisystream) | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fnoisystream?style=flat-square) | Frame-based streaming helpers.                       |
+| [`@noisytransfer/noisyauth`](https://www.npmjs.com/package/@noisytransfer/noisyauth)     | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fnoisyauth?style=flat-square)   | Authentication handshake state machines.             |
+| [`@noisytransfer/noisycache`](https://www.npmjs.com/package/@noisytransfer/noisycache)   | ![npm](https://img.shields.io/npm/v/%40noisytransfer%2Fnoisycache?style=flat-square)  | Caching and file-transfer utilities.                 |
 
 > **Note:** Additional internal packages (e.g. `@noisytransfer/errors`, `@noisytransfer/util`, or an umbrella `@noisytransfer/noisytransfer-protocol`) may live in the monorepo but might not be published to npm. Keep them documented here if/when they’re public.
 
