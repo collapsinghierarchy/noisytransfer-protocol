@@ -48,11 +48,15 @@ export async function runCourierReceiver({ tx, sessionId, recvMsg, recipientPriv
         await handleCourierFrame(m);
         try {
           un?.();
-        } catch {}
+        } catch {
+          logger.warn("failed to unsubscribe from tx");
+        }
       } catch (e) {
         try {
           un?.();
-        } catch {}
+        } catch {
+          logger.warn("failed to unsubscribe from tx");
+        }
         reject(
           e instanceof NoisyError
             ? e

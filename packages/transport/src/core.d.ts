@@ -7,8 +7,11 @@
  */
 export function isTransport(obj: any): boolean;
 export type Transport = {
-  send: (data: any) => void;
-  close: (code?: number, reason?: string) => void;
-  onMessage: (cb: (data: any) => void) => () => void;
-  onClose: (cb: (ev: { code: number; reason?: string }) => void) => () => void;
+    send: (data: any) => void;
+    close: (code?: number, reason?: string) => void;
+    onMessage: (cb: (data: any) => void) => () => void;
+    onClose: (cb: (ev: {
+        code: number;
+        reason?: string;
+    }) => void) => () => void;
 };

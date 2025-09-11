@@ -11,16 +11,10 @@ export function mkSendMsgWithVK(verificationKeyU8: Uint8Array): Uint8Array;
  *
  * Stable API: runCourierSender({ tx, sessionId, sendMsg, signingKey, keyPacket })
  */
-export function runCourierSender({
-  tx,
-  sessionId,
-  sendMsg,
-  keyPacket,
-  signingKey,
-}: {
-  tx: any;
-  sessionId: any;
-  sendMsg: any;
-  keyPacket: any;
-  signingKey: any;
+export function runCourierSender({ tx, sessionId, sendMsg, keyPacket, signingKey }: {
+    tx: any;
+    sessionId: any;
+    sendMsg: any;
+    keyPacket: any;
+    signingKey: any;
 }): Promise<any>;

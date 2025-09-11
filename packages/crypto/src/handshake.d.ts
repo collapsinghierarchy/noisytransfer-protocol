@@ -9,10 +9,10 @@
  *   }
  */
 export function createSenderSession(receiverPublicKey: any): Promise<{
-  seal: (pt: any, aad: any) => Promise<ArrayBuffer>;
-  hpkeSeal: (pt: any, aad: any) => Promise<ArrayBuffer>;
-  exportSecret: (info: any, len: any) => Promise<Uint8Array<ArrayBuffer>>;
-  enc: ArrayBuffer;
+    seal: (pt: any, aad: any) => Promise<ArrayBuffer>;
+    hpkeSeal: (pt: any, aad: any) => Promise<ArrayBuffer>;
+    exportSecret: (info: any, len: any) => Promise<Uint8Array<ArrayBuffer>>;
+    enc: ArrayBuffer;
 }>;
 /**
  * Receiver: given the HPKE encapsulation and the recipient's private key, complete HPKE.
@@ -22,10 +22,8 @@ export function createSenderSession(receiverPublicKey: any): Promise<{
  *     hpkeOpen(ct[, aad]) : Promise<Uint8Array> // alias (clearer name)
  *   }
  */
-export function createReceiverSession(
-  encapsulation: any,
-  recipientPrivateKey: any
-): Promise<{
-  open: (ct: any, aad: any) => Promise<ArrayBuffer>;
-  hpkeOpen: (ct: any, aad: any) => Promise<ArrayBuffer>;
+export function createReceiverSession(encapsulation: any, recipientPrivateKey: any): Promise<{
+    open: (ct: any, aad: any) => Promise<ArrayBuffer>;
+    hpkeOpen: (ct: any, aad: any) => Promise<ArrayBuffer>;
+    exportSecret: (info: any, len: any) => Promise<Uint8Array<ArrayBuffer>>;
 }>;

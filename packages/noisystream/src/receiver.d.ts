@@ -8,10 +8,15 @@
  *   tx: { send:(f:any)=>void, onMessage:(cb:(f:any)=>void)=>()=>void, onClose?:(cb:()=>void)=>()=>void, close?:(...a:any[])=>void },
  *   sessionId: string,
  *   sink?: WritableLike | ((u8:Uint8Array)=>any),
- *   expectBytes?: number,         // optional extra guard against short/long transfers
+ *   expectBytes?: number,
  *   abortSignal?: AbortSignal,
  *   onProgress?:(rcvd:number,total:number)=>void,
- *   finAck?: boolean
+ *   // New flow control & crypto:
+ *   backlogChunks?: number,
+ *   backlogBytes?: number,
+ *   windowChunks?: number,
+ *   creditQuantum?: number,
+ *   hpke?: { peerMaterial: any, ownPriv: any } // receiver uses encapsulation + own private key
  * }} RecvOpts
  */
 /**
@@ -21,26 +26,33 @@
  * @returns {Promise<{ ok:true, bytes:number, frames:number, result?:Uint8Array }>}
  */
 export function recvFileWithAuth(opts: RecvOpts): Promise<{
-  ok: true;
-  bytes: number;
-  frames: number;
-  result?: Uint8Array;
+    ok: true;
+    bytes: number;
+    frames: number;
+    result?: Uint8Array;
 }>;
 export type WritableLike = {
-  write: (u8: Uint8Array) => any;
-  close?: () => any;
+    write: (u8: Uint8Array) => any;
+    close?: () => any;
 };
-export type RecvOpts = {
-  tx: {
-    send: (f: any) => void;
-    onMessage: (cb: (f: any) => void) => () => void;
-    onClose?: (cb: () => void) => () => void;
-    close?: (...a: any[]) => void;
-  };
-  sessionId: string;
-  sink?: WritableLike | ((u8: Uint8Array) => any);
-  expectBytes?: number;
-  abortSignal?: AbortSignal;
-  onProgress?: (rcvd: number, total: number) => void;
-  finAck?: boolean;
+/**
+ * ?: number,
+ *  backlogBytes?: number,
+ *  windowChunks?: number,
+ *  creditQuantum?: number,
+ *  hpke?: { peerMaterial: any, ownPriv: any } // receiver uses encapsulation + own private key
+ * }} RecvOpts
+ */
+export type backlogChunks = {
+    tx: {
+        send: (f: any) => void;
+        onMessage: (cb: (f: any) => void) => () => void;
+        onClose?: (cb: () => void) => () => void;
+        close?: (...a: any[]) => void;
+    };
+    sessionId: string;
+    sink?: WritableLike | ((u8: Uint8Array) => any);
+    expectBytes?: number;
+    abortSignal?: AbortSignal;
+    onProgress?: (rcvd: number, total: number) => void;
 };

@@ -184,6 +184,7 @@ export function rtcInitiator(signal, rtcCfg = { iceServers: [] }, opts = {}) {
 
         // Create DC before offer
         const dc = pc.createDataChannel("data", { ordered: true });
+        logger.debug("📡 created ordered data channel");
 
         // Open watchdog
         let iceTimer = setTimeout(() => {

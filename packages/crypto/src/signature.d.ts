@@ -3,8 +3,8 @@
  * @returns {Promise<{verificationKey: Uint8Array, signingKey: CryptoKey}>}
  */
 export function genRSAPSS(): Promise<{
-  verificationKey: Uint8Array;
-  signingKey: CryptoKey;
+    verificationKey: Uint8Array;
+    signingKey: CryptoKey;
 }>;
 /**
  * Sign data with RSA-PSS (saltLength equal to hash length).
@@ -12,10 +12,7 @@ export function genRSAPSS(): Promise<{
  * @param {ArrayBuffer|Uint8Array} data
  * @returns {Promise<Uint8Array>}
  */
-export function signChunk(
-  signingKey: CryptoKey,
-  data: ArrayBuffer | Uint8Array
-): Promise<Uint8Array>;
+export function signChunk(signingKey: CryptoKey, data: ArrayBuffer | Uint8Array): Promise<Uint8Array>;
 export function importVerifyKey(spkiBytesU8: any): Promise<CryptoKey>;
 /**
  * Verify a signature.
@@ -24,9 +21,5 @@ export function importVerifyKey(spkiBytesU8: any): Promise<CryptoKey>;
  * @param {ArrayBuffer|Uint8Array} data
  * @returns {Promise<boolean>}
  */
-export function verifyChunk(
-  verifyKey: CryptoKey,
-  signature: ArrayBuffer | Uint8Array,
-  data: ArrayBuffer | Uint8Array
-): Promise<boolean>;
+export function verifyChunk(verifyKey: CryptoKey, signature: ArrayBuffer | Uint8Array, data: ArrayBuffer | Uint8Array): Promise<boolean>;
 export function createRSAVerifier(): import("crypto").Verify;

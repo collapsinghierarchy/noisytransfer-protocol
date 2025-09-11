@@ -1,115 +1,106 @@
-/**
- * @param {{ sessionId: string, totalBytes: number, encTag?: Uint8Array|ArrayBuffer|null }} p
- * @returns {{ type:'ns_init', sessionId:string, totalBytes:number, encTag?:string }}
- */
-export function packStreamInit({
-  sessionId,
-  totalBytes,
-  encTag,
-}: {
-  sessionId: string;
-  totalBytes: number;
-  encTag?: Uint8Array | ArrayBuffer | null;
+export function packStreamInit({ sessionId, totalBytes, encTag, hpkeEnc }: {
+    sessionId: any;
+    totalBytes: any;
+    encTag: any;
+    hpkeEnc: any;
 }): {
-  type: "ns_init";
-  sessionId: string;
-  totalBytes: number;
-  encTag?: string;
+    type: "ns_init";
+    sessionId: any;
 };
-/**
- * @param {any} m
- * @returns {{ sessionId:string, totalBytes:number, encTag?:Uint8Array }}
- */
 export function parseStreamInit(m: any): {
-  sessionId: string;
-  totalBytes: number;
-  encTag?: Uint8Array;
+    sessionId: any;
+    totalBytes: any;
+    encTag: Uint8Array<ArrayBufferLike>;
+    hpkeEnc: any;
+};
+export function packStreamReady({ sessionId, totalBytes, features, windowChunks }: {
+    sessionId: any;
+    totalBytes?: any;
+    features?: any;
+    windowChunks?: any;
+}): {
+    type: "ns_ready";
+    sessionId: any;
+};
+export function parseStreamReady(m: any): {
+    sessionId: any;
+};
+export function packStreamData({ sessionId, seq, chunk, aead }: {
+    sessionId: any;
+    seq: any;
+    chunk: any;
+    aead?: any;
+}): {
+    type: "ns_data";
+    sessionId: any;
+    seq: any;
+    chunk: string;
+};
+export function parseStreamData(m: any): {
+    sessionId: any;
+    seq: any;
+    chunk: Uint8Array<ArrayBufferLike>;
 };
 /**
- * @param {{ sessionId: string }} p
- * @returns {{ type:'ns_ready', sessionId:string }}
+ * @param {{ sessionId: string, chunks:number }} p
+* @returns {{ type:'ns_credit', sessionId:string, chunks:number }}
  */
-export function packStreamReady({ sessionId }: { sessionId: string }): {
-  type: "ns_ready";
-  sessionId: string;
+export function packStreamCredit({ sessionId, chunks }: {
+    sessionId: string;
+    chunks: number;
+}): {
+    type: "ns_credit";
+    sessionId: string;
+    chunks: number;
 };
 /** @param {any} m */
-export function parseStreamReady(m: any): {
-  sessionId: any;
-};
-/**
- * @param {{ sessionId: string, seq: number, chunk: Uint8Array|ArrayBuffer }} p
- * @returns {{ type:'ns_data', sessionId:string, seq:number, chunk:string }}
- */
-export function packStreamData({
-  sessionId,
-  seq,
-  chunk,
-}: {
-  sessionId: string;
-  seq: number;
-  chunk: Uint8Array | ArrayBuffer;
-}): {
-  type: "ns_data";
-  sessionId: string;
-  seq: number;
-  chunk: string;
-};
-/**
- * @param {any} m
- * @returns {{ sessionId:string, seq:number, chunk:Uint8Array }}
- */
-export function parseStreamData(m: any): {
-  sessionId: string;
-  seq: number;
-  chunk: Uint8Array;
+export function parseStreamCredit(m: any): {
+    sessionId: any;
+    chunks: any;
 };
 /**
  * @param {{ sessionId: string, ok: boolean, errCode?: string }} p
  * @returns {{ type:'ns_fin', sessionId:string, ok:boolean, errCode?:string }}
  */
-export function packStreamFin({
-  sessionId,
-  ok,
-  errCode,
-}: {
-  sessionId: string;
-  ok: boolean;
-  errCode?: string;
+export function packStreamFin({ sessionId, ok, errCode }: {
+    sessionId: string;
+    ok: boolean;
+    errCode?: string;
 }): {
-  type: "ns_fin";
-  sessionId: string;
-  ok: boolean;
-  errCode?: string;
+    type: "ns_fin";
+    sessionId: string;
+    ok: boolean;
+    errCode?: string;
 };
 /** @param {any} m */
 export function parseStreamFin(m: any): {
-  sessionId: any;
-  ok: boolean;
+    sessionId: any;
+    ok: boolean;
 };
 /**
  * @param {{ sessionId: string }} p
  * @returns {{ type:'ns_fin_ack', sessionId:string }}
  */
-export function packStreamFinAck({ sessionId }: { sessionId: string }): {
-  type: "ns_fin_ack";
-  sessionId: string;
+export function packStreamFinAck({ sessionId }: {
+    sessionId: string;
+}): {
+    type: "ns_fin_ack";
+    sessionId: string;
 };
 /** @param {any} m */
 export function parseStreamFinAck(m: any): {
-  sessionId: any;
+    sessionId: any;
 };
-/** @typedef {'ns_init'|'ns_ready'|'ns_data'|'ns_fin'|'ns_fin_ack'} StreamFrameType */
 export const STREAM: Readonly<{
-  INIT: "ns_init";
-  READY: "ns_ready";
-  DATA: "ns_data";
-  FIN: "ns_fin";
-  FIN_ACK: "ns_fin_ack";
+    INIT: "ns_init";
+    READY: "ns_ready";
+    DATA: "ns_data";
+    CREDIT: "ns_credit";
+    FIN: "ns_fin";
+    FIN_ACK: "ns_fin_ack";
 }>;
 export function isStreamInit(m: any): boolean;
 export function isStreamReady(m: any): boolean;
 export function isStreamData(m: any): boolean;
 export function isStreamFin(m: any): boolean;
 export function isStreamFinAck(m: any): boolean;
-export type StreamFrameType = "ns_init" | "ns_ready" | "ns_data" | "ns_fin" | "ns_fin_ack";

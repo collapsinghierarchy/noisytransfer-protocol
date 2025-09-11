@@ -1,1 +1,0 @@
-export function makeUUID(): string;

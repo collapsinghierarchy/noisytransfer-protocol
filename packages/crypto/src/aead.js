@@ -1,5 +1,5 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { asU8 } from "@noisytransfer/util/buffer";
+import { asU8, logger } from "@noisytransfer/util";
 
 const te = new TextEncoder();
 
@@ -106,6 +106,7 @@ export async function makeDecryptor(keyBytes, baseIV) {
       const aad = buildAAD(id, idx);
       const u8 = asU8(ct);
       const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: aad }, key, u8);
+
       return new Uint8Array(pt);
     } catch (cause) {
       // WebCrypto throws on tag mismatch / wrong key / wrong AAD

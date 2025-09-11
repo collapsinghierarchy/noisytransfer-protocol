@@ -1,5 +1,6 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { logger } from "@noisytransfer/util/logger";
+import { logger, b64u } from "@noisytransfer/util";
+import { mkAeadStreamFromHpke, sha256, importVerifyKey, verifyChunk, sigInit, sigAddData, sigFinalize } from "@noisytransfer/crypto";
 
 import {
   STREAM,
@@ -8,7 +9,17 @@ import {
   parseStreamData,
   parseStreamFin,
   packStreamFinAck,
+  packStreamCredit,
 } from "./frames.js";
+
+
+// Same AAD id derivation as the sender (must match byte-for-byte).
+const __te = new TextEncoder();
+async function computeAadId({ dir, sessionId, totalBytes }) {
+  const canon = { p:"noisystream", v:1, mode:"hpke", dir, sid:String(sessionId), tot:Number(totalBytes)>>>0 };
+  const digest = await sha256(__te.encode(JSON.stringify(canon)));
+  return b64u(digest);
+}
 
 /**
  * @typedef {{
@@ -20,10 +31,15 @@ import {
  *   tx: { send:(f:any)=>void, onMessage:(cb:(f:any)=>void)=>()=>void, onClose?:(cb:()=>void)=>()=>void, close?:(...a:any[])=>void },
  *   sessionId: string,
  *   sink?: WritableLike | ((u8:Uint8Array)=>any),
- *   expectBytes?: number,         // optional extra guard against short/long transfers
+ *   expectBytes?: number,
  *   abortSignal?: AbortSignal,
  *   onProgress?:(rcvd:number,total:number)=>void,
- *   finAck?: boolean
+ *   // New flow control & crypto:
+ *   backlogChunks?: number,
+ *   backlogBytes?: number,
+ *   windowChunks?: number,
+ *   credit?: number,
+ *   hpke?: { peerMaterial: any, ownPriv: any } // receiver uses encapsulation + own private key
  * }} RecvOpts
  */
 
@@ -41,32 +57,44 @@ export async function recvFileWithAuth(opts) {
     expectBytes,
     abortSignal,
     onProgress,
-    finAck = false,
-    accept,
+    backlogChunks = 0,
+    backlogBytes = 0,
+    windowChunks = 0,
+    credit = 1,
   } = opts || {};
+
   if (!tx || typeof tx.onMessage !== "function" || typeof tx.send !== "function") {
     throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: missing/invalid tx" });
   }
-  if (typeof sessionId !== "string" || !sessionId) {
+  if (typeof sessionId !== "string" || sessionId.length === 0) {
     throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: sessionId required" });
   }
+  if (expectBytes != null && !(Number.isInteger(expectBytes) && expectBytes >= 0 && Number.isSafeInteger(expectBytes))) {
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: expectBytes must be a safe non-negative integer when provided" });
+  }
 
+  logger.debug("[ns] receiver: starting", { sessionId, expectBytes, backlogChunks, backlogBytes, windowChunks, credit });
   const writer = makeSink(sink);
-  let unsubMsg = null;
+  let unsubMsg;
+  const backlog = new Map();
+  let backlogTotalBytes = 0;
+  let lastWriteP = Promise.resolve();
   let unsubClose = null;
+  let sigState = null;
 
   const state = {
     sawInit: false,
     ready: false,
-    totalBytes: 0,
     nextSeq: 0,
-    bytes: 0,
     frames: 0,
+    bytes: 0,
+    totalBytes: 0,
+    fin: false,
+    signatureVerified: false,
   };
 
-  // Ensure DATA writes are processed strictly before FIN validation
-  let lastWriteP = Promise.resolve();
-
+  // E2EE state
+  let dec = null;     // decryptor (HPKE stream)
   const doneP = new Promise((resolve, reject) => {
     unsubClose = tx.onClose?.(() => {
       reject(
@@ -78,76 +106,155 @@ export async function recvFileWithAuth(opts) {
       );
     });
 
+    let seenMaxSeq = -1;          // highest seq we've observed from incoming DATA
+    let deliveredSeq = -1;        // last seq we've fully written to sink
+    let deliveredSinceCredit = 0; // how many chunks delivered since last CREDIT grant
+
+    logger.debug("[ns] receiver: waiting for INIT", { sessionId });
     unsubMsg = tx.onMessage(async (m) => {
       try {
         if (!m || m.sessionId !== sessionId) return;
-
         switch (m.type) {
           case STREAM.INIT: {
+            if (state.sawInit) throw new NoisyError({ code: "NC_PROTOCOL", message: "duplicate init" });
             const init = parseStreamInit(m);
-            if (state.sawInit)
-              throw new NoisyError({ code: "NC_PROTOCOL", message: "duplicate init" });
             state.sawInit = true;
             state.totalBytes = init.totalBytes;
             state.frames++;
-            // respond ready
-            safeSend(tx, packStreamReady({ sessionId }));
+
+            // HPKE-only: presence of hpkeEnc is authoritative
+            if (!(init.hpkeEnc instanceof Uint8Array) || init.hpkeEnc.byteLength === 0) {
+              throw new NoisyError({ code: "NC_PROTOCOL", message: "ns_init missing hpkeEnc" });
+            }
+            if (!opts.hpke.ownPriv) {
+              throw new NoisyError({ code: "NC_BAD_PARAM", message: "missing receiver HPKE private key" });
+            }
+            if (!writer || typeof writer.write !== "function") {
+              throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: writer missing/invalid" });
+            }
+            if (!(typeof state.totalBytes === "number" && state.totalBytes >= 0 && Number.isSafeInteger(state.totalBytes))) {
+              throw new NoisyError({ code: "NC_PROTOCOL", message: "ns_init.totalBytes invalid" });
+            }
+            const hpkeEnc = init.hpkeEnc;
+            if (!(hpkeEnc instanceof Uint8Array) || hpkeEnc.byteLength === 0) {
+              throw new NoisyError({ code: "NC_PROTOCOL", message: "missing hpkeEnc in ns_init" });
+            }
+            logger.debug("[ns] receiver: INIT received", { sessionId, totalBytes: state.totalBytes });
+            // build HPKE stream (receiver role) with the same canonical AAD id
+            const aadId = await computeAadId({ dir: "S2R", sessionId, totalBytes: state.totalBytes });
+            dec = await mkAeadStreamFromHpke("receiver", hpkeEnc, opts.hpke.ownPriv, { id: aadId });
+            sigState = await sigInit({ sessionId, totalBytes: state.totalBytes, hpkeEnc, aadId });
+            logger.debug("[ns] receiver: sigInit inputs", {
+              sessionId, totalBytes: state.totalBytes, aadId, hpkeEnc,
+            });
+            if (dec === null || !dec || typeof dec.open !== "function") {
+              throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: failed to create decryptor" });
+            }
+            // respond ready (with credit features if enabled)
+            safeSend(tx, packStreamReady({
+              sessionId,
+              totalBytes: state.totalBytes,
+              features: (windowChunks > 0 ? { credit: true } : undefined),
+              windowChunks: (windowChunks > 0 ? windowChunks : undefined)
+            }));
             state.ready = true;
-            logger.debug("[ns] receiver: READY sent", { sessionId, totalBytes: state.totalBytes });
-            // accept hooks (optional)
-            try {
-              if (accept && typeof accept.onRequest === "function") {
-                const ok = await accept.onRequest({
-                  sessionId,
-                  totalBytes: state.totalBytes,
-                  encTag: init.encTag,
-                });
-                if (ok === false)
-                  throw new NoisyError({
-                    code: "NC_PROTOCOL",
-                    message: "request rejected by receiver",
-                  });
-              }
-              if (accept && typeof accept.onStart === "function") {
-                try {
-                  await accept.onStart({ sessionId, totalBytes: state.totalBytes });
-                } catch {}
-              }
-            } catch {}
+            logger.debug("[ns] receiver: READY sent", { sessionId, totalBytes: state.totalBytes, credit: windowChunks>0 });
             break;
           }
 
           case STREAM.DATA: {
-            if (!state.ready)
+            if (!state.ready) {
               throw new NoisyError({ code: "NC_PROTOCOL", message: "data before ready" });
-            const data = parseStreamData(m);
-            if (data.seq !== state.nextSeq) {
-              throw new NoisyError({
-                code: "NC_PROTOCOL",
-                message: "non-monotonic seq",
-                context: { expected: state.nextSeq, got: data.seq },
-              });
             }
+            const data = parseStreamData(m);
+            // Initialization near state
             state.frames++;
-            const u8 = data.chunk;
-            // Serialize writes & counters so FIN can await completion cleanly
-            lastWriteP = lastWriteP.then(async () => {
-              await writer.write(u8);
-              state.nextSeq++;
-              state.bytes += u8.byteLength;
-              try {
-                onProgress?.(state.bytes, state.totalBytes);
-              } catch {}
-              try {
-                accept?.onChunk?.(u8);
-              } catch {}
-              return true
-            });
+            const seq = data.seq | 0;
+            seenMaxSeq = Math.max(seenMaxSeq, seq);
+            backlog.set(seq, data.chunk);
+            backlogTotalBytes += data.chunk.byteLength;
+
+            if (data.aead !== true) {
+              throw new NoisyError({ code: "NC_PROTOCOL", message: "expected AEAD-encrypted ns_data" });
+            }
+            if (!(data.chunk instanceof Uint8Array) || data.chunk.byteLength === 0) {
+              throw new NoisyError({ code: "NC_PROTOCOL", message: "ns_data.chunk must be non-empty bytes" });
+            }
+
+            const processInOrder = async () => {
+              const ct = backlog.get(state.nextSeq);
+              if (!ct) return false;
+
+              const thisSeq = state.nextSeq;
+              backlog.delete(thisSeq);
+              backlogTotalBytes -= ct.byteLength;
+              state.nextSeq++; // reserve immediately
+
+              lastWriteP = lastWriteP.then(async () => {
+                // update transcript with ciphertext in-order
+                if (sigState) await sigAddData(sigState, thisSeq, ct);
+                logger.debug("[ns] receiver: sigState updated", { thisSeq, sigState });
+
+                const plain = await dec.open(ct);
+                await writer.write(plain);
+
+                state.bytes += plain.byteLength;
+                deliveredSeq = thisSeq;
+                deliveredSinceCredit += 1;
+
+                try { onProgress?.(state.bytes, state.totalBytes); } catch {}
+
+                if (windowChunks > 0) {
+                  const inFlight = Math.max(0, seenMaxSeq - deliveredSeq);
+                  const missing  = Math.max(0, windowChunks - inFlight);
+
+                  if (deliveredSinceCredit >= credit && missing > 0) {
+                    const grant = Math.min(deliveredSinceCredit, missing);
+                    deliveredSinceCredit = 0;
+
+                    const frame = packStreamCredit({ sessionId, chunks: grant });
+                    queueMicrotask(() => {
+                      try {
+                        safeSend(tx, frame);
+                      } catch (e) {
+                        logger.warn("[ns] receiver: failed to send CREDIT", { err: e?.message, code: e?.code });
+                      }
+                    });
+                  }
+                }
+              });
+
+              return true;
+            };
+            // Buffer ciphertext; duplicates older than nextSeq are dropped
+            if (seq < state.nextSeq) break; // drop duplicate
+            backlog.set(seq, data.chunk);
+            backlogTotalBytes += data.chunk.byteLength;
+            // Enforce configured limits only if set
+            if ((backlogChunks > 0 && backlog.size > backlogChunks) ||
+                (backlogBytes > 0 && backlogTotalBytes > backlogBytes)) {
+              throw new NoisyError({ code: "NC_BACKLOG_OVERFLOW", message: "receiver backlog overflow" });
+           }
+            // Drain in-order as far as possible
+            while (await processInOrder()) {}
             break;
           }
 
           case STREAM.FIN: {
-            const fin = parseStreamFin(m);
+             const fin = parseStreamFin(m);
+            if (sigState) {
+              const digest = await sigFinalize(sigState, { frames: state.frames + 1, bytes: state.bytes });
+              // prefer app-provided verify key; else use fin.sigPub, if present
+              let verifyKey = opts.sign.verifyKey || (fin.sigPub ? await importVerifyKey(fin.sigPub) : null);
+              if (fin.sig && verifyKey) {
+                logger.debug("[ns] receiver: verifying stream signature", { digest: Buffer.from(digest).toString("hex") });
+                const okSig = await verifyChunk(verifyKey, fin.sig, digest);
+                if (!okSig) {
+                  throw new NoisyError({ code: "NC_SIGNATURE_INVALID", message: "stream signature invalid" });
+                }
+                state.signatureVerified = true;
+              }
+            }
             // Make sure the previous DATA write (if any) has fully settled.
             await lastWriteP;
             state.frames++;
@@ -155,6 +262,13 @@ export async function recvFileWithAuth(opts) {
               throw new NoisyError({
                 code: "NC_PROTOCOL",
                 message: `sender fin not ok: ${fin.errCode || "unknown"}`,
+              });
+            }
+            if (fin.ok === true && state.bytes !== state.totalBytes) {
+              throw new NoisyError({
+                code: "NC_PROTOCOL",
+                message: "fin.ok=true but byte count mismatch",
+                context: { have: state.bytes, expect: state.totalBytes },
               });
             }
             if (typeof expectBytes === "number" && expectBytes !== state.bytes) {
@@ -173,35 +287,26 @@ export async function recvFileWithAuth(opts) {
             }
             try {
               writer.close?.();
-            } catch {}
-            // accept.finish hook (provide a readable sink)
-            try {
-              if (accept && typeof accept.finish === "function") {
-                const sinkHandle = {
-                  async arrayBuffer() {
-                    const u8 = writer.result?.() || new Uint8Array(0);
-                    return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
-                  },
-                };
-                await accept.finish({ sink: sinkHandle });
-              }
-            } catch {}
-            if (finAck) {
+            } catch {
+              logger.warn("[ns] receiver: writer.close error");
+            }
               try {
                 safeSend(tx, packStreamFinAck({ sessionId }));
-              } catch {}
-            }
+              } catch {
+                logger.warn("[ns] receiver: failed to send FIN_ACK");
+              }
             resolve({
               ok: true,
               bytes: state.bytes,
               frames: state.frames,
               result: writer.result?.(),
+              signatureVerified: state.signatureVerified
             });
             break;
           }
-
           default:
             // ignore unrelated types
+            logger.warn("[ns] receiver: ignoring unexpected frame", { type: m?.type, sessionId });
             break;
         }
       } catch (e) {
@@ -229,16 +334,20 @@ export async function recvFileWithAuth(opts) {
       : doneP);
     logger.debug("[ns] receiver: complete", { sessionId, bytes: res.bytes, frames: res.frames });
     return res;
+  } catch (err) {
+    if (err instanceof NoisyError) throw err;
+    throw new NoisyError({ code: "NC_UNKNOWN", message: "recvFileWithAuth failed", cause: err });
   } finally {
     try {
-      accept?.close?.();
-    } catch {}
-    try {
       unsubMsg?.();
-    } catch {}
+    } catch {
+      logger.warn("[ns] receiver: unsubMsg error");
+    }
     try {
       unsubClose?.();
-    } catch {}
+    } catch {
+      logger.warn("[ns] receiver: unsubClose error");
+    }
   }
 }
 

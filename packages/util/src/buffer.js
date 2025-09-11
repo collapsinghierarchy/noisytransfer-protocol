@@ -10,6 +10,13 @@ export function asU8(x) {
   return new Uint8Array(0);
 }
 
+
+/** Normalize to a tight Uint8Array view (no offset/length surprises). */
+export function toU8(input) {
+  const u = asU8(input);
+  return new Uint8Array(u.buffer, u.byteOffset, u.byteLength);
+}
+
 /** Predicate to decide if a value should be treated as binary. */
 export function isByteLike(x) {
   return (

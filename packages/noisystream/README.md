@@ -109,4 +109,57 @@ sender: ns_data #1..N                  →  receiver: write()
 sender: ns_fin(ok)                     →  receiver: ns_fin_ack (optional)
 ```
 
+Got it—here’s a tight README snippet using **`windowChunks`** and **`credit`** only.
+
+# Flow control: `windowChunks` & `credit`
+
+Noisystream uses credit-based flow control:
+
+* **`windowChunks`** (announced by the receiver in `READY`): the **initial in-flight allowance** in **chunks**.
+  When the sender sees `READY { windowChunks }`, it sets `credit = windowChunks` and may transmit up to that many `DATA` frames immediately (1 chunk = 1 credit).
+
+* **`credit`** (granted by the receiver via `CREDIT` frames): the **refill size**.
+  As the receiver decrypts/writes data, it periodically sends `CREDIT { chunks: credit }` to **add** that many credits back to the sender, regulating throughput over time.
+
+### Lifecycle
+
+1. Receiver starts and sends `READY { windowChunks, … }`.
+2. Sender sets `credit = windowChunks` and sends up to `credit` chunks (each `DATA` consumes 1 credit).
+3. Receiver processes data and sends `CREDIT { chunks: credit }` to replenish.
+4. Sender pauses when `credit === 0`, resumes when more credit arrives.
+
+### Tuning
+
+* A good start: `windowChunks = 8` or `16`, `credit = 4`.
+* Larger **`windowChunks`** → more in-flight data (better for high-latency/high-bandwidth links), but more buffering.
+* Smaller **`credit`** → smoother pacing but more control frames; larger **`credit`** → fewer control frames but burstier refills.
+* Setting **`windowChunks = 0`** disables credit-based control (sender can “firehose”; only transport backpressure applies).
+
+### Example
+
+```js
+// Receiver
+await recvFileWithAuth({
+  tx,
+  sessionId,
+  windowChunks: 8,  // allow up to 8 chunks in flight initially
+  credit: 4,        // grant 4 new credits per CREDIT frame
+  hpke: { ownPriv },// receiver KEM private key bytes
+});
+
+// Sender
+await sendFileWithAuth({
+  tx,
+  sessionId,
+  source,           // Uint8Array / ArrayBufferView
+  chunkBytes: 64 * 1024,
+  hpke: { peerMaterial }, // recipient KEM public key bytes
+});
+```
+
+**Rule of thumb:**
+**`windowChunks`** = how far the sender can run at once.
+**`credit`** = how many new tickets the receiver hands out each time.
+
+
 APIs are unstable and may evolve.

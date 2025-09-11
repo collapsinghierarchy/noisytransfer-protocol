@@ -1,13 +1,11 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { b64u, unb64u } from "@noisytransfer/util/base64";
-import { asU8 } from "@noisytransfer/util/buffer";
-
-/** @typedef {'ns_init'|'ns_ready'|'ns_data'|'ns_fin'|'ns_fin_ack'} StreamFrameType */
+import { b64u, unb64u, asU8, logger } from "@noisytransfer/util";
 
 export const STREAM = Object.freeze({
   INIT: "ns_init",
   READY: "ns_ready",
   DATA: "ns_data",
+  CREDIT: "ns_credit",
   FIN: "ns_fin",
   FIN_ACK: "ns_fin_ack",
 });
@@ -23,97 +21,157 @@ function badFrame(message, context) {
 }
 
 // ---------- INIT ----------
-/**
- * @param {{ sessionId: string, totalBytes: number, encTag?: Uint8Array|ArrayBuffer|null }} p
- * @returns {{ type:'ns_init', sessionId:string, totalBytes:number, encTag?:string }}
- */
-export function packStreamInit({ sessionId, totalBytes, encTag = null }) {
+export function packStreamInit({ sessionId, totalBytes, encTag, hpkeEnc }) {
   if (!isStr(sessionId)) badFrame("init.sessionId invalid", { field: "sessionId" });
-  if (!isNonNegInt(totalBytes)) badFrame("init.totalBytes invalid", { field: "totalBytes" });
-  const out = { type: STREAM.INIT, sessionId, totalBytes };
-  if (encTag != null) out.encTag = b64u(asU8(encTag));
-  return out;
+  const msg = { type: STREAM.INIT, sessionId };
+  if (isNonNegInt(totalBytes)) msg.totalBytes = totalBytes;
+  if (encTag instanceof Uint8Array) msg.encTag = b64u(encTag);
+  // JSON-safe: send encapsulated KEM key as base64url
+   if (hpkeEnc !== null) msg.hpkeEnc = b64u(asU8(hpkeEnc));
+  else badFrame("hpkeEnc invalid or missing");
+  return msg;
 }
 
-/**
- * @param {any} m
- * @returns {{ sessionId:string, totalBytes:number, encTag?:Uint8Array }}
- */
 export function parseStreamInit(m) {
   if (!m || m.type !== STREAM.INIT) badFrame("not ns_init", { got: m?.type });
   if (!isStr(m.sessionId)) badFrame("init.sessionId invalid", { field: "sessionId" });
-  if (!isNonNegInt(m.totalBytes)) badFrame("init.totalBytes invalid", { field: "totalBytes" });
-  const obj = { sessionId: m.sessionId, totalBytes: m.totalBytes };
-  if (m.encTag != null) obj.encTag = unb64u(m.encTag);
-  return obj;
+  const totalBytes = isNonNegInt(m.totalBytes) ? m.totalBytes : undefined;
+  // Accept base64 string (preferred) or already-Uint8Array (in case of in-process transport)
+  let hpkeEnc = m.hpkeEnc;
+  if (typeof hpkeEnc === "string") hpkeEnc = unb64u(hpkeEnc);
+  if (!(hpkeEnc instanceof Uint8Array)) badFrame("init.hpkeEnc invalid");
+  let encTag;
+  if (typeof m.encTag === "string") encTag = unb64u(m.encTag);
+  return { sessionId: m.sessionId, totalBytes, encTag, hpkeEnc };
 }
 
 // ---------- READY ----------
-/**
- * @param {{ sessionId: string }} p
- * @returns {{ type:'ns_ready', sessionId:string }}
- */
-export function packStreamReady({ sessionId }) {
+export function packStreamReady({ sessionId, totalBytes = undefined, features = undefined, windowChunks = undefined }) {
   if (!isStr(sessionId)) badFrame("ready.sessionId invalid", { field: "sessionId" });
-  return { type: STREAM.READY, sessionId };
+  const out = { type: STREAM.READY, sessionId };
+  if (isNonNegInt(totalBytes)) out.totalBytes = totalBytes;
+  if (features != null) out.features = features;
+  if (isNonNegInt(windowChunks)) out.windowChunks = windowChunks;
+  return out;
 }
 
-/** @param {any} m */
 export function parseStreamReady(m) {
   if (!m || m.type !== STREAM.READY) badFrame("not ns_ready", { got: m?.type });
   if (!isStr(m.sessionId)) badFrame("ready.sessionId invalid");
-  return { sessionId: m.sessionId };
+  const obj = { sessionId: m.sessionId };
+  if (isNonNegInt(m.totalBytes)) obj.totalBytes = m.totalBytes;
+  if (m.features != null) obj.features = m.features;
+  if (isNonNegInt(m.windowChunks)) obj.windowChunks = m.windowChunks;
+  return obj;
 }
 
 // ---------- DATA ----------
-/**
- * @param {{ sessionId: string, seq: number, chunk: Uint8Array|ArrayBuffer }} p
- * @returns {{ type:'ns_data', sessionId:string, seq:number, chunk:string }}
- */
-export function packStreamData({ sessionId, seq, chunk }) {
+export function packStreamData({ sessionId, seq, chunk, aead = undefined }) {
   if (!isStr(sessionId)) badFrame("data.sessionId invalid", { field: "sessionId" });
   if (!isNonNegInt(seq)) badFrame("data.seq invalid", { field: "seq" });
   const u8 = asU8(chunk);
   if (u8.byteLength === 0) badFrame("data.chunk empty", { field: "chunk" });
-  return { type: STREAM.DATA, sessionId, seq, chunk: b64u(u8) };
+  const out = { type: STREAM.DATA, sessionId, seq, chunk: b64u(u8) };
+  if (aead != null) out.aead = aead;
+  return out;
 }
 
-/**
- * @param {any} m
- * @returns {{ sessionId:string, seq:number, chunk:Uint8Array }}
- */
 export function parseStreamData(m) {
   if (!m || m.type !== STREAM.DATA) badFrame("not ns_data", { got: m?.type });
   if (!isStr(m.sessionId)) badFrame("data.sessionId invalid");
   if (!isNonNegInt(m.seq)) badFrame("data.seq invalid");
   const c = unb64u(m.chunk);
   if (!(c instanceof Uint8Array) || c.byteLength === 0) badFrame("data.chunk invalid");
-  return { sessionId: m.sessionId, seq: m.seq, chunk: c };
+  const obj = { sessionId: m.sessionId, seq: m.seq, chunk: c };
+  if (m.aead != null) obj.aead = m.aead;
+  return obj;
+}
+
+// ---------- CREDIT ----------
+/**
+ * @param {{ sessionId: string, chunks:number }} p
+* @returns {{ type:'ns_credit', sessionId:string, chunks:number }}
+ */
+export function packStreamCredit({ sessionId, chunks }) {
+  if (!isStr(sessionId)) badFrame("credit.sessionId invalid");
+  if (!isNonNegInt(chunks)) badFrame("credit.chunks invalid");
+  return { type: STREAM.CREDIT, sessionId, chunks };
+}
+
+/** @param {any} m */
+export function parseStreamCredit(m) {
+  if (!m || m.type !== STREAM.CREDIT) badFrame("not ns_credit", { got: m?.type });
+  if (!isStr(m.sessionId)) badFrame("credit.sessionId invalid");
+  if (!isNonNegInt(m.chunks)) badFrame("credit.chunks invalid");
+   return { sessionId: m.sessionId, chunks: m.chunks };
 }
 
 // ---------- FIN ----------
 /**
- * @param {{ sessionId: string, ok: boolean, errCode?: string }} p
- * @returns {{ type:'ns_fin', sessionId:string, ok:boolean, errCode?:string }}
+ * Pack ns_fin frame.
+ * @param {{
+ *   sessionId: string,
+ *   ok: boolean,
+ *   errCode?: string,
+ *   sig?: Uint8Array,
+ *   sigAlg?: string,
+ *   sigPub?: Uint8Array
+ * }} p
+ * @returns {{ type:'ns_fin', sessionId:string, ok:boolean, errCode?:string, sig?:string, sigAlg?:string, sigPub?:string }}
  */
-export function packStreamFin({ sessionId, ok, errCode }) {
+export function packStreamFin({ sessionId, ok, errCode, sig, sigAlg, sigPub }) {
   if (!isStr(sessionId)) badFrame("fin.sessionId invalid");
   if (!isBool(ok)) badFrame("fin.ok invalid");
+
   const out = { type: STREAM.FIN, sessionId, ok: !!ok };
+
   if (!ok && isStr(errCode)) out.errCode = errCode;
+
+  // Optional signature fields (encode to base64url for transport)
+  if (sig instanceof Uint8Array && sig.byteLength > 0) out.sig = b64u(sig);
+  if (typeof sigAlg === "string" && sigAlg.length > 0) out.sigAlg = sigAlg;
+  if (sigPub instanceof Uint8Array && sigPub.byteLength > 0) out.sigPub = b64u(sigPub);
+
   return out;
 }
 
-/** @param {any} m */
+/**
+ * Parse ns_fin frame (lenient on optional signature fields; algorithm validated later).
+ * @param {any} m
+ * @returns {{ sessionId:string, ok:boolean, errCode?:string, sig?:Uint8Array, sigAlg?:string, sigPub?:Uint8Array }}
+ */
 export function parseStreamFin(m) {
   if (!m || m.type !== STREAM.FIN) badFrame("not ns_fin", { got: m?.type });
   if (!isStr(m.sessionId)) badFrame("fin.sessionId invalid");
   if (!isBool(m.ok)) badFrame("fin.ok invalid");
-  const out = { sessionId: m.sessionId, ok: !!m.ok };
-  if (m.errCode != null) {
-    if (!isStr(m.errCode)) badFrame("fin.errCode invalid");
-    out.errCode = m.errCode;
-  }
+
+  // Optional diagnostics
+  try { logger?.debug?.("[ns] parseStreamFin", { m }); } catch {}
+
+  // Optional fields
+  let sig, sigPub, sigAlg;
+
+  // Accept base64url strings or raw Uint8Array (in-process transports)
+  if (typeof m.sig === "string") sig = unb64u(m.sig);
+  else if (m.sig instanceof Uint8Array) sig = m.sig;
+  else if (m.sig != null) badFrame("fin.sig invalid");
+
+  if (typeof m.sigPub === "string") sigPub = unb64u(m.sigPub);
+  else if (m.sigPub instanceof Uint8Array) sigPub = m.sigPub;
+  else if (m.sigPub != null) badFrame("fin.sigPub invalid");
+
+  if (typeof m.sigAlg === "string") sigAlg = m.sigAlg;
+  else if (m.sigAlg != null) badFrame("fin.sigAlg invalid");
+
+  const out = {
+    sessionId: m.sessionId,
+    ok: !!m.ok,
+    errCode: (m.errCode != null ? (isStr(m.errCode) ? m.errCode : badFrame("fin.errCode invalid")) : undefined),
+    sig,
+    sigAlg,
+    sigPub,
+  };
+
   return out;
 }
 

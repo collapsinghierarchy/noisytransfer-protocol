@@ -7,14 +7,10 @@
  * @param {AuthSReceiverOpts=} opts
  * @returns {{ close:()=>void, getState:()=>AuthState, onState:(cb:(s:AuthState)=>void)=>()=>void }}
  */
-export function createAuthReceiver(
-  tx: any,
-  hooks?: AuthHooks | undefined,
-  opts?: AuthSReceiverOpts | undefined
-): {
-  close: () => void;
-  getState: () => AuthState;
-  onState: (cb: (s: AuthState) => void) => () => void;
+export function createAuthReceiver(tx: any, hooks?: AuthHooks | undefined, opts?: AuthSReceiverOpts | undefined): {
+    close: () => void;
+    getState: () => AuthState;
+    onState: (cb: (s: AuthState) => void) => () => void;
 };
 export type AuthHooks = any;
 export type AuthReceiverOpts = any;

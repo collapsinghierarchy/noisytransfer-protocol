@@ -1,14 +1,8 @@
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
 import { withTimeout } from "@noisytransfer/util/async";
-import { asU8 } from "@noisytransfer/util/buffer";
+import { asU8, toU8 } from "@noisytransfer/util/buffer";
 
 import { suite } from "./suite.js";
-
-/** Normalize to a tight Uint8Array view (no offset/length surprises). */
-function toU8(input) {
-  const u = asU8(input);
-  return new Uint8Array(u.buffer, u.byteOffset, u.byteLength);
-}
 
 /**
  * Sender: given the receiver’s public key, perform HPKE sender handshake.
@@ -104,9 +98,18 @@ export async function createReceiverSession(encapsulation, recipientPrivateKey) 
   }
 
   const open = (ct, aad) => ctx.open(toU8(ct), aad ? toU8(aad) : undefined);
+  // Expose exporter if the underlying HPKE context supports it
+  const exportSecret = typeof ctx.export === "function"
+    ? async (info, len) => {
+       const i = info instanceof Uint8Array ? info : new Uint8Array(info);
+        const out = await ctx.export(i, len);
+        return out instanceof Uint8Array ? out : new Uint8Array(out);
+      }
+    : undefined;
 
   return {
     open,
     hpkeOpen: open,
+    exportSecret
   };
 }

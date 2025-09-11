@@ -11,7 +11,7 @@ import { createSenderSession, createReceiverSession } from "./handshake.js";
 
 /**
  * Build a symmetric stream context derived from HPKE via the **exporter**.
- * There is **no insecure fallback**; the HPKE context must provide an exporter.
+ * he HPKE context must provide an exporter.
  *
  * Returns:
  *   Sender => { seal(pt): Promise<Uint8Array>, open: throws, enc: ArrayBuffer, id: string }
@@ -42,19 +42,21 @@ export async function mkAeadStreamFromHpke(role, peerMaterial, ownPriv, opts = {
       });
     }
   } catch (e) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: `Session creation error: ${e.message}` });
+    throw new NoisyError({ code: "NC_BAD_PARAM", message: `Session creation error: ${e.message} -- role "${role}"`});
   }
 
   // 2) Require HPKE exporter
   if (typeof sess.exportSecret !== "function") {
     throw new NoisyError({
       code: "NC_UNSUPPORTED_ALG",
-      message: "HPKE exporter is required for stream key derivation (no fallback).",
+      message: `HPKE exporter is required for stream key derivation (no fallback) -- role "${role}".`,
     });
   }
 
   // 3) Derive symmetric key & baseIV via exporter
-  const LABEL = new TextEncoder().encode(role === "sender" ? STREAM.LABEL_S2R : STREAM.LABEL_R2S);
+  // This stream is S→R only: sender seals, receiver opens.
+  // Both roles must derive the same material → always use LABEL_S2R.
+  const LABEL = new TextEncoder().encode(STREAM.LABEL_S2R);
   const KM_LEN = 32 + 12; // AES-256 key + 96-bit IV
   const km = await sess.exportSecret(LABEL, KM_LEN);
   const kmU8 = km instanceof Uint8Array ? km : new Uint8Array(km);

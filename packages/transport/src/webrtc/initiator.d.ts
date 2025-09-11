@@ -1,7 +1,3 @@
-export function rtcInitiator(
-  signal: any,
-  rtcCfg?: {
+export function rtcInitiator(signal: any, rtcCfg?: {
     iceServers: any[];
-  },
-  opts?: {}
-): Promise<any>;
+}, opts?: {}): Promise<any>;
