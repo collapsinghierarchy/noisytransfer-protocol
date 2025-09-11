@@ -4,13 +4,6 @@
 
 > Experimental monorepo of cryptographic, WebRTC, and WebSocket transport primitives.
 
-This README refresh focuses on:
-
-* Correct, working links to each published package on npm.
-* A clear overview table with live version badges.
-* Quick install snippets.
-* Development & contribution instructions.
-* Known issues called out explicitly.
 
 ---
 
