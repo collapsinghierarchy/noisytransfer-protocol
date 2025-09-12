@@ -160,63 +160,93 @@ test("RTC auth: same SAS and expected state flow", { timeout: 30_000 }, async (t
   await seen;
 });
 
-// ---------- TEST 2: DTLS-auth + cleartext DC (no PQ) ----------
-test("DTLS-auth via SAS + cleartext stream over RTC DC (no PQ)", { timeout: 45_000 }, async (t) => {
+test("RTC noisyauth: delivered payloads match what was sent (bytes ↔ base64url)", { timeout: 60_000 }, async (t) => {
   skipIfNoIntegration(t);
+  installWrtcGlobals(wrtc);
 
   const { A, B, onCleanup } = await withSignalPair(t);
   const [rawA, rawB] = await Promise.all([
     rtcInitiator(A, { iceServers: [] }),
     rtcResponder(B, { iceServers: [] }),
   ]);
+
   onCleanup(async () => {
-    try {
-      await rawA?.close?.();
-    } catch {}
-    try {
-      await rawB?.close?.();
-    } catch {}
+    try { rawA.close?.(); } catch {}
+    try { rawB.close?.(); } catch {}
   });
 
+  // helper: waitUp is already defined earlier in this file; reuse it.
   await Promise.all([waitUp(rawA), waitUp(rawB)]);
 
-  // If your "no PQ" path needs special msg material, generate it here.
-  // Otherwise, we can reuse the same SAS flow as above (policy "rtc"):
-  const recvMsg = await genReceiverMsg(); // or set to undefined if not needed
-  const sendMsg = await genSenderVerifyKey(); // or set to undefined if not needed
-  const sessionId = crypto.randomUUID();
+  // Known-good “payloads”
+  const rnd = (n) => {
+    const u = new Uint8Array(n);
+    crypto.getRandomValues(u);
+    return u;
+  };
+  const msgS_sent = rnd(73); // pretend: sender SPKI bytes
+  const msgR_sent = rnd(65); // pretend: receiver KEM pub bytes
 
-  await Promise.all([
-    new Promise((res, rej) => {
-      createAuthSender(
-        rawA,
-        { onSAS: () => {}, waitConfirm: () => true, onDone: res, onError: rej },
-        { policy: "rtc", sessionId, sendMsg, pq: false } // `pq: false` if your API supports it
-      );
-    }),
-    new Promise((res, rej) => {
-      createAuthReceiver(
-        rawB,
-        { onSAS: () => {}, waitConfirm: () => true, onDone: res, onError: rej },
-        { policy: "rtc", sessionId, recvMsg, pq: false }
-      );
-    }),
-  ]);
+  // Local b64url decoder (no padding)
+  const unb64u8 = (s) => {
+    const pad = s.length % 4 === 2 ? "==" : s.length % 4 === 3 ? "=" : "";
+    const b64 = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+    const buf = Buffer.from(b64, "base64");
+    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  };
 
-  // quick ping on cleartext DC to ensure channel viability
-  const seen = new Promise((resolve) => {
-    rawB.onMessage((m) => {
-      if (m && m.type === "PING" && m.n === 2) resolve();
-    });
+  // Observed deliveries
+  let msgS_rcv = null; // receiver’s onDone sees sender’s msgS (bytes)
+  let msgR_snd = null; // sender’s onDone sees receiver’s msgR (b64url string)
+  let sessionId = crypto.randomUUID();
+
+  // Receiver: commits to msgR_sent (bytes)
+  const recvP = new Promise((resolve, reject) => {
+    createAuthReceiver(
+      rawB,
+      {
+        onSAS: () => {},
+        waitConfirm: async () => true,
+        onDone: ({ msgS }) => {
+          msgS_rcv = msgS; // Uint8Array
+          resolve();
+        },
+        onError: reject,
+      },
+      { session: { policy: "rtc", sessionId: sessionId }, recvMsg: msgR_sent },
+    );
   });
-  rawA.send({ type: "PING", n: 2 });
-  await seen;
 
-  // drain / flush best-effort (tolerate timeout with wrtc)
-  try {
-    await flush(rawA, { timeoutMs: 10_000 });
-  } catch {}
-  try {
-    await flush(rawB, { timeoutMs: 10_000 });
-  } catch {}
+  // Sender: offers msgS_sent (bytes)
+  const sendP = new Promise((resolve, reject) => {
+    createAuthSender(
+      rawA,
+      {
+        onSAS: () => {},
+        waitConfirm: async () => true,
+        onDone: ({ msgR }) => {
+          msgR_snd = msgR; // base64url string
+          resolve();
+        },
+        onError: reject,
+      },
+      { session: { policy: "rtc", sessionId: sessionId }, sendMsg: msgS_sent },
+    );
+  });
+
+  await Promise.all([recvP, sendP]);
+
+  // Assertions
+  assert.ok(msgS_rcv instanceof Uint8Array, "receiver must get msgS as bytes");
+  assert.equal(msgS_rcv.byteLength, msgS_sent.byteLength, "msgS length must match");
+  assert.deepStrictEqual(new Uint8Array(msgS_rcv), new Uint8Array(msgS_sent), "msgS bytes must match exactly");
+
+  assert.equal(typeof msgR_snd, "string", "sender must get msgR as base64url string");
+  const msgR_dec = unb64u8(msgR_snd);
+  assert.equal(msgR_dec.byteLength, msgR_sent.byteLength, "msgR length must match after base64url decode");
+  assert.deepStrictEqual(msgR_dec, msgR_sent, "msgR bytes must match exactly after decode");
+
+  // Best-effort flush/teardown
+  try { await flush(rawA, { timeoutMs: 10_000 }); } catch {}
+  try { await flush(rawB, { timeoutMs: 10_000 }); } catch {}
 });

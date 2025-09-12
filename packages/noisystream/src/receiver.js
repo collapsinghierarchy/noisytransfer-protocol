@@ -246,9 +246,13 @@ export async function recvFileWithAuth(opts) {
           }
 
           case STREAM.FIN: {
-             const fin = parseStreamFin(m);
+              const fin = parseStreamFin(m);
+              getLogger().debug("[ns] receiver: FIN received", { state });
+              await lastWriteP;
+              state.frames++;
             if (sigState) {
-              const digest = await sigFinalize(sigState, { frames: state.frames + 1, bytes: state.bytes });
+              // Make sure the previous DATA write (if any) has fully settled.
+              const digest = await sigFinalize(sigState, { frames: state.frames, bytes: state.bytes });
               // prefer app-provided verify key; else use fin.sigPub, if present
               let verifyKey = opts.sign.verifyKey || (fin.sigPub ? await importVerifyKey(fin.sigPub) : null);
               if (fin.sig && verifyKey) {
@@ -260,9 +264,6 @@ export async function recvFileWithAuth(opts) {
                 state.signatureVerified = true;
               }
             }
-            // Make sure the previous DATA write (if any) has fully settled.
-            await lastWriteP;
-            state.frames++;
             if (!fin.ok) {
               throw new NoisyError({
                 code: "NC_PROTOCOL",
