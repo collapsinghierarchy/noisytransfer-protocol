@@ -1,6 +1,8 @@
 {
   "name": "@noisytransfer/noisycache",
   "version": "0.2.1",
+  "private": true,
+  "deprecated": "This package is deprecated and will no longer be published. Use @noisytransfer/noisystream + @noisytransfer/crypto instead.",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -37,9 +39,6 @@
     "@noisytransfer/constants": "^0.2.1"
   },
   "license": "AGPL-3.0-only",
-  "publishConfig": {
-    "access": "public"
-  },
   "files": [
     "src"
   ],

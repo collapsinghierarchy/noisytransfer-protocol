@@ -1,165 +1,173 @@
+
 # @noisytransfer/noisystream
 
-Frame-based, back-pressure-aware streaming utilities for NoisyTransfer.
+Encrypted, frame-based, **ordered**, backpressure‑aware **streaming of data sources** over any message transport (e.g., WebRTC `RTCDataChannel`).  
+Each chunk is protected under a long‑lived HPKE context from `@noisytransfer/crypto`, and the **entire stream is signed** by the sender and verified by the receiver (required).
 
-- **Handshake**: `ns_init(totalBytes, encTag?) → ns_ready`.
-- **Data**: `ns_data(seq++, ct)` frames until done.
-- **Finalize**: `ns_fin(ok)` (optionally `ns_fin_ack` with retries/backoff).
+*(encryption built on top of `@noisytransfer/crypto`, which wraps `hpke-js` for the HPKE part)*
+
+---
 
 ## Install
 
 ```bash
 npm i @noisytransfer/noisystream
+# peer
+npm i @noisytransfer/crypto
 ```
 
-## Quickstart
+Requires Node 18+ (WebCrypto on `globalThis.crypto`) or a modern browser.
 
-```js
+---
+
+## Supported data sources
+
+You can stream any of the following as the `source`:
+
+- `Uint8Array`, `ArrayBuffer` (and typed views)
+- `Blob` (browser)
+- **(Async)Iterable** of byte chunks (`Uint8Array`/`ArrayBuffer`), including Node.js `Readable` streams that implement `Symbol.asyncIterator`
+
+For **buffer‑like** sources (Uint8Array/ArrayBuffer/Blob), the length is derived automatically.  
+For **streaming** sources (AsyncIterable/Iterable), you **must** pass `totalBytes`.
+
+---
+
+## Quickstart (WebRTC‑style, mirrors the integration tests)
+
+```ts
+import wrtc from "@roamhq/wrtc";
+import { randomBytes } from "node:crypto";
 import { sendFileWithAuth, recvFileWithAuth } from "@noisytransfer/noisystream";
+import { suite, genRSAPSS, importVerifyKey, sha256Hex } from "@noisytransfer/crypto";
 
-const tx = makeYourTransport();
-const sessionId = "session-123";
+// ... set up your ordered Tx-like transport objects: rawA (sender) and rawB (receiver)
 
-// Receiver side
-const rcv = recvFileWithAuth({
-  tx,
+// 1) Receiver prepares HPKE key pair and shares public key bytes
+const { publicKey, privateKey } = await suite.kem.generateKeyPair();
+const recipientPk = await suite.kem.serializePublicKey(publicKey);
+
+// 2) Prepare signing (REQUIRED on both sides)
+const { verificationKey, signingKey } = await genRSAPSS();
+// In practice, the receiver should already know (or receive) the sender's public key.
+// Here we import it locally for demonstration:
+const verifyKey = await importVerifyKey(verificationKey);
+
+// 3) Pick a dataset to send
+const src = randomBytes(660_999);
+const sessionId = crypto.randomUUID();
+
+// 4) Receiver starts first (verifies signature)
+const collected = [];
+const recvP = recvFileWithAuth({
+  tx: rawB,
   sessionId,
-  sink: {
-    write: (u8) => chunks.push(u8),
-    close: () => console.log("done"),
-  },
-  onProgress: (rcvd, total) => console.log({ rcvd, total }),
+  hpke: { ownPriv: privateKey },
+  // Provide a verifier OR rely on the sender embedding its SPKI in FIN.
+  // Supplying verifyKey is the most explicit.
+  sign: { verifyKey },
+  sink: (u8) => collected.push(u8),
 });
 
-// Sender side
-const fileBytes = await file.arrayBuffer();
-await sendFileWithAuth({
-  tx,
+// 5) Sender starts and signs the stream
+const sendP = sendFileWithAuth({
+  tx: rawA,
   sessionId,
-  source: new Uint8Array(fileBytes),
-  totalBytes: fileBytes.byteLength, // required for streaming sources
-  chunkBytes: 64 * 1024,
-  onProgress: (sent, total) => console.log({ sent, total }),
-  finAck: true, // wait for ns_fin_ack with retries
+  source: src,                           // Uint8Array | ArrayBuffer | Blob | (Async)Iterable
+  hpke: { peerMaterial: recipientPk },   // receiver's public key bytes
+  // REQUIRED: sign with the sender's private key
+  // Optionally include your public key SPKI so the receiver can verify without pre-config
+  sign: { privateKey: signingKey, publicKeySpki: verificationKey },
 });
+
+// 6) Wait for completion and verify integrity out-of-band if desired
+const [rx, tx] = await Promise.allSettled([recvP, sendP]);
+// rx.value = { ok:true, bytes, frames, signatureVerified: true }
+const received = Buffer.concat(collected);
+console.log("hash:", await sha256Hex(received));
 ```
+
+> **Transport contract:** noisystream assumes **ordered delivery**. If your transport can reorder or drop messages, add an outer sequencing/retry layer and deliver in order to `recvFileWithAuth`.
+
+---
 
 ## API
 
-### `sendFileWithAuth(opts) → Promise<{ ok:true, bytesSent, frames }>`
+### `sendFileWithAuth(opts) ⇒ Promise<{ ok:true, bytes:number, frames:number }>`
+Sends `INIT` → waits `READY` → emits `DATA*` → sends `FIN` → (waits for `FIN_ACK` with bounded retries).
 
-**Opts**
+**Required**
+- `tx: TxLike` — your transport
+- `sessionId: string` — unique stream id per transfer
+- `source: ByteSource` — the data source (see **Supported data sources**)
+- `hpke: { peerMaterial: ByteLike }` — recipient’s public key bytes
+- `sign: { privateKey: CryptoKey, publicKeySpki?: Uint8Array, alg?: string }` — **sender must sign**; include `publicKeySpki` if the receiver won’t have your pubkey out‑of‑band
+
+**Useful options**
+- `totalBytes?: number` — **required** for streaming sources; derived for buffers/Blob
+- `chunkBytes?: number` — default `65536`
+- `onProgress?: (sent:number, total:number)=>void`
+- Flow control / finalize: `finAckTimeoutMs`, `finAckMaxRetries`, `finAckBackoffMs`, `adaptiveChunking`, `maxBufferedBytes`
+
+---
+
+### `recvFileWithAuth(opts) ⇒ Promise<{ ok:true, bytes:number, frames:number, signatureVerified: true }>`
+Waits `INIT` → sends `READY` (optionally advertising credits) → decrypts `DATA` **in order** → verifies `FIN` (signature required) → sends `FIN_ACK`.
+
+**Required**
+- `tx: TxLike`, `sessionId: string`
+- `hpke: { ownPriv: CryptoKey }`
+- `sign: { verifyKey?: CryptoKey }` — **receiver must verify**  
+  - Provide `verifyKey` **or** rely on the sender embedding `publicKeySpki` in `FIN` (recommended to still validate it against your trust model).
+
+**Optional**
+- `sink?: WritableLike | (u8:Uint8Array)=>any` — omit to buffer in memory (test helpers expose `result()`)
+- `onProgress?`
+- Flow control: `backlogChunks`, `backlogBytes`, `windowChunks`, `credit`
+
+**Length check**
+- If `INIT.totalBytes` is present, it is **authoritative**. A mismatch at finalize raises `NC_STREAM_MISMATCH`.
+
+---
+
+## Frame shapes (wire format)
+
+All frames are JSON; binary fields are **base64url** strings.
 
 ```ts
-type SendOpts = {
-  tx: { send:(f:any)=>void, onMessage:(cb)=>()=>void, onClose?:(cb)=>()=>void, close?():void },
-  sessionId: string,
-  source: Uint8Array | ArrayBuffer | Blob | AsyncIterable<Uint8Array|ArrayBuffer> | Iterable<...>,
-  totalBytes?: number,             // REQUIRED if source length can’t be derived
-  chunkBytes?: number,             // default 65536
-  encTag?: Uint8Array|ArrayBuffer|null, // echoed in ns_init; caller-defined
-  onProgress?: (sent:number,total:number)=>void,
-  abortSignal?: AbortSignal,
-
-  // finalization behavior:
-  finAck?: boolean,                // default false
-  finAckTimeoutMs?: number,        // default 5000
-  finAckMaxRetries?: number,       // default 3
-  finAckBackoffMs?: number,        // default 100 (linear backoff)
-  adaptiveChunking?: boolean,      // default false; tweaks size using tx.bufferedAmount
-}
+type NsInit   = { type:"ns_init",  sessionId:string, totalBytes?:number, encTag?:string, hpkeEnc:string };
+type NsReady  = { type:"ns_ready", sessionId:string, totalBytes?:number, features?:{ credit?:true }, windowChunks?:number };
+type NsData   = { type:"ns_data",  sessionId:string, seq:number, chunk:string, aead?:true };
+type NsCredit = { type:"ns_credit",sessionId:string, chunks:number };
+type NsFin    = { type:"ns_fin",   sessionId:string, ok:boolean, errCode?:string, sig?:string, sigAlg?:string, sigPub?:string };
+type NsFinAck = { type:"ns_fin_ack", sessionId:string };
 ```
 
-Throws `NoisyError` with codes like `NC_BAD_PARAM`, `NC_TX_SEND`, `NC_TRANSPORT_FLUSH_TIMEOUT`. Progress is best-effort; it counts bytes successfully queued into frames.
+---
 
-### `recvFileWithAuth(opts) → Promise<{ ok:true, bytes, frames }>`
+## Flow control (credit mode)
 
-**Opts**
+If the receiver sends `READY` with `features.credit` and `windowChunks > 0`:
 
-```ts
-type WritableLike = { write(u8: Uint8Array): any; close?(): any };
-type RecvOpts = {
-  tx;
-  sessionId: string;
-  sink?: WritableLike | ((u8: Uint8Array) => any); // if omitted, data buffers in memory
-  expectBytes?: number; // guard: mismatch throws
-  abortSignal?: AbortSignal;
-  onProgress?: (rcvd: number, total: number) => void;
-};
-```
+1. Sender begins with `credit = windowChunks`.
+2. Each `DATA` consumes 1 credit; sender stalls when credit is 0.
+3. Receiver issues `CREDIT {chunks}` as it decrypts/writes.
+4. If `windowChunks === 0`, crediting is disabled and the sender transmits immediately (subject to transport backpressure).
 
-Return fields:
+---
 
-- If no `sink` provided: resolves with `{ bytes: Uint8Array, frames }`.
-- If `sink` provided: `{ bytes: number, frames }` (bytes written).
+## Errors
 
-### Frames & helpers
+All errors are thrown as `NoisyError` with a machine‑readable `code`:
+- `NC_BAD_PARAM` – option/validation failure
+- `NC_ABORTED` – aborted via `AbortSignal`
+- `NC_TX_SEND` / `NC_TX_CLOSED` – transport issues
+- `NC_PROTOCOL` – out‑of‑order or unexpected frame
+- `NC_STREAM_MISMATCH` – byte count mismatch at finalize
+- `NC_SIGN_VERIFY_FAILED` – signature did not verify on the receiver
 
-Exports in `frames`:
+---
 
-- `STREAM` constants (`INIT|READY|DATA|FIN|FIN_ACK`)
-- `packStreamInit/Ready/Data/Fin/FinAck`, `parseStream*`
-- Type guards: `isStreamInit/Ready/Data/Fin`
+## License
 
-Sequence:
-
-```
-sender: ns_init(totalBytes, encTag?)  →  receiver: ns_ready
-sender: ns_data #1..N                  →  receiver: write()
-sender: ns_fin(ok)                     →  receiver: ns_fin_ack (optional)
-```
-
-Got it—here’s a tight README snippet using **`windowChunks`** and **`credit`** only.
-
-# Flow control: `windowChunks` & `credit`
-
-Noisystream uses credit-based flow control:
-
-* **`windowChunks`** (announced by the receiver in `READY`): the **initial in-flight allowance** in **chunks**.
-  When the sender sees `READY { windowChunks }`, it sets `credit = windowChunks` and may transmit up to that many `DATA` frames immediately (1 chunk = 1 credit).
-
-* **`credit`** (granted by the receiver via `CREDIT` frames): the **refill size**.
-  As the receiver decrypts/writes data, it periodically sends `CREDIT { chunks: credit }` to **add** that many credits back to the sender, regulating throughput over time.
-
-### Lifecycle
-
-1. Receiver starts and sends `READY { windowChunks, … }`.
-2. Sender sets `credit = windowChunks` and sends up to `credit` chunks (each `DATA` consumes 1 credit).
-3. Receiver processes data and sends `CREDIT { chunks: credit }` to replenish.
-4. Sender pauses when `credit === 0`, resumes when more credit arrives.
-
-### Tuning
-
-* A good start: `windowChunks = 8` or `16`, `credit = 4`.
-* Larger **`windowChunks`** → more in-flight data (better for high-latency/high-bandwidth links), but more buffering.
-* Smaller **`credit`** → smoother pacing but more control frames; larger **`credit`** → fewer control frames but burstier refills.
-* Setting **`windowChunks = 0`** disables credit-based control (sender can “firehose”; only transport backpressure applies).
-
-### Example
-
-```js
-// Receiver
-await recvFileWithAuth({
-  tx,
-  sessionId,
-  windowChunks: 8,  // allow up to 8 chunks in flight initially
-  credit: 4,        // grant 4 new credits per CREDIT frame
-  hpke: { ownPriv },// receiver KEM private key bytes
-});
-
-// Sender
-await sendFileWithAuth({
-  tx,
-  sessionId,
-  source,           // Uint8Array / ArrayBufferView
-  chunkBytes: 64 * 1024,
-  hpke: { peerMaterial }, // recipient KEM public key bytes
-});
-```
-
-**Rule of thumb:**
-**`windowChunks`** = how far the sender can run at once.
-**`credit`** = how many new tickets the receiver hands out each time.
-
-
-APIs are unstable and may evolve.
+AGPL‑3.0

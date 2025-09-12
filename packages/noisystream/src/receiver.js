@@ -15,6 +15,11 @@ import {
 
 // Same AAD id derivation as the sender (must match byte-for-byte).
 const __te = new TextEncoder();
+/**
+ * Canonical stream ID bound into HPKE AAD (see sender).
+ * @param {{ dir:"S2R"|"R2S", sessionId:string, totalBytes:number }} p
+ * @returns {Promise<string>}
+ */
 async function computeAadId({ dir, sessionId, totalBytes }) {
   const canon = { p:"noisystream", v:1, mode:"hpke", dir, sid:String(sessionId), tot:Number(totalBytes)>>>0 };
   const digest = await sha256(__te.encode(JSON.stringify(canon)));
@@ -31,7 +36,6 @@ async function computeAadId({ dir, sessionId, totalBytes }) {
  *   tx: { send:(f:any)=>void, onMessage:(cb:(f:any)=>void)=>()=>void, onClose?:(cb:()=>void)=>()=>void, close?:(...a:any[])=>void },
  *   sessionId: string,
  *   sink?: WritableLike | ((u8:Uint8Array)=>any),
- *   expectBytes?: number,
  *   abortSignal?: AbortSignal,
  *   onProgress?:(rcvd:number,total:number)=>void,
  *   // New flow control & crypto:
@@ -44,17 +48,21 @@ async function computeAadId({ dir, sessionId, totalBytes }) {
  */
 
 /**
- * Stable API: recvFileWithAuth(...)
- * Waits ns_init → replies ns_ready → accepts ns_data (monotonic seq) → expects ns_fin.
- * @param {RecvOpts} opts
- * @returns {Promise<{ ok:true, bytes:number, frames:number, result?:Uint8Array }>}
+ * Receive and decrypt a stream.
+ * Flow: wait INIT → send READY (optionally with credits) → DATA in-order → verify FIN → send FIN_ACK.
+ * - Builds one HPKE receiver context from INIT.hpkeEnc and reuses it for all chunks.
+ * - If `windowChunks > 0`, grants credits via CREDIT frames as chunks are delivered to the sink.
+ * - If sender included a signature in FIN, verifies it and sets `signatureVerified=true`.
+ * - Length check is based on `INIT.totalBytes` (authoritative if present); mismatch → `NC_STREAM_MISMATCH`.
+ *
+ * @param {import("./types.js").RecvOpts} opts
+ * @returns {Promise<{ ok:true, bytes:number, frames:number, signatureVerified?: boolean }>}
  */
 export async function recvFileWithAuth(opts) {
   const {
     tx,
     sessionId,
     sink,
-    expectBytes,
     abortSignal,
     onProgress,
     backlogChunks = 0,
@@ -69,11 +77,8 @@ export async function recvFileWithAuth(opts) {
   if (typeof sessionId !== "string" || sessionId.length === 0) {
     throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: sessionId required" });
   }
-  if (expectBytes != null && !(Number.isInteger(expectBytes) && expectBytes >= 0 && Number.isSafeInteger(expectBytes))) {
-    throw new NoisyError({ code: "NC_BAD_PARAM", message: "recvFileWithAuth: expectBytes must be a safe non-negative integer when provided" });
-  }
 
-  logger.debug("[ns] receiver: starting", { sessionId, expectBytes, backlogChunks, backlogBytes, windowChunks, credit });
+  logger.debug("[ns] receiver: starting", { sessionId, backlogChunks, backlogBytes, windowChunks, credit });
   const writer = makeSink(sink);
   let unsubMsg;
   const backlog = new Map();
@@ -266,23 +271,9 @@ export async function recvFileWithAuth(opts) {
             }
             if (fin.ok === true && state.bytes !== state.totalBytes) {
               throw new NoisyError({
-                code: "NC_PROTOCOL",
+                code: "NC_STREAM_MISMATCH",
                 message: "fin.ok=true but byte count mismatch",
                 context: { have: state.bytes, expect: state.totalBytes },
-              });
-            }
-            if (typeof expectBytes === "number" && expectBytes !== state.bytes) {
-              throw new NoisyError({
-                code: "NC_STREAM_MISMATCH",
-                message: "byte count mismatch",
-                context: { expected: expectBytes, got: state.bytes },
-              });
-            }
-            if (state.totalBytes && state.bytes !== state.totalBytes) {
-              throw new NoisyError({
-                code: "NC_STREAM_MISMATCH",
-                message: "received bytes differ from announced totalBytes",
-                context: { totalBytes: state.totalBytes, got: state.bytes },
               });
             }
             try {
@@ -365,7 +356,12 @@ function safeSend(tx, frame) {
   }
 }
 
-/** Normalize sink to a WritableLike—or build an in-memory aggregator by default. */
+/**
+ * Normalize `sink` to a simple writer interface.
+ * - function(u8): called per chunk
+ * - { write, close? }: used directly
+ * - undefined: collects into memory; `result()` returns Uint8Array
+ */
 function makeSink(sink) {
   // function(u8) style
   if (typeof sink === "function") {

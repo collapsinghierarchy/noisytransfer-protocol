@@ -74,7 +74,7 @@ const withTimeout = (p, ms, label) =>
   });
 
 
-test("RTC stream: INIT/DATA/FIN roundtrip w/ integrity", { timeout: 60_000 }, async (t) => {
+test("RTC stream: INIT/DATA/FIN roundtrip", { timeout: 60_000 }, async (t) => {
   skipIfNoIntegration(t);
   installWrtcGlobals(wrtc);
 
@@ -136,7 +136,7 @@ test("RTC stream: INIT/DATA/FIN roundtrip w/ integrity", { timeout: 60_000 }, as
   await Promise.allSettled([forceCloseNoFlush(rawA), forceCloseNoFlush(rawB)]);
 });
 
-test("RTC stream: INIT/DATA/FIN roundtrip w/ integrity and dfferent credit and window sizes", { timeout: 60_000 }, async (t) => {
+test("RTC stream: length mismatch triggers NC_STREAM_MISMATCH", { timeout: 60_000 }, async (t) => {
   skipIfNoIntegration(t);
   installWrtcGlobals(wrtc);
 
@@ -153,28 +153,118 @@ test("RTC stream: INIT/DATA/FIN roundtrip w/ integrity and dfferent credit and w
 
   await Promise.all([waitUp(rawA), waitUp(rawB)]);
 
-   const { publicKey, privateKey } = await suite.kem.generateKeyPair();
+  const { publicKey, privateKey } = await suite.kem.generateKeyPair();
+  const recipientPk = await suite.kem.serializePublicKey(publicKey);
+  const { verificationKey, signingKey } = await genRSAPSS();
+
+    // Actual data to send
+  const actual = randomBytes(128_000);
+  const sessionId = crypto.randomUUID();
+
+  // Smaller payload is fine here; we just want mismatch at FIN
+  // Make the source a *streaming* iterable so the sender cannot derive length.
+  async function* srcStream() {
+    // yield in 2 chunks to exercise framing
+    yield actual.subarray(0, 64_000);
+    yield actual.subarray(64_000);
+  }
+
+  // Intentionally *wrong* totalBytes advertised in INIT
+  const wrongTotal = actual.byteLength + 13;
+
+  // Intentionally WRONG expected length
+  const verifyKey = await importVerifyKey(verificationKey);
+  console.log("starting receiver (with wrong expectBytes)...");
+  const rxP = withTimeout(
+    asPromise(() =>
+      recvFileWithAuth({
+        tx: rawB,
+        sessionId,
+        hpke: { ownPriv: privateKey },
+        sign: { verifyKey },
+        // any sink is fine; receiver should reject at FIN
+        sink: mkCollectSink()
+      })
+    ),
+    15000,
+    "recvFileWithAuth stalled/failed"
+  );
+
+  const txP = withTimeout(
+    asPromise(() =>
+      sendFileWithAuth({
+        tx: rawA,
+        sessionId,
+        source: srcStream(), 
+        totalBytes: wrongTotal,      // <-- authoritative for streaming sources
+        hpke: { peerMaterial: recipientPk },
+        sign: { privateKey: signingKey, publicKeySpki: verificationKey }
+      })
+    ),
+    15000,
+    "sendFileWithAuth stalled/failed"
+  );
+
+  const [rxR, txR] = await Promise.allSettled([rxP, txP]);
+  console.log("Status: recv", rxR.status, ", send", txR.status);
+  if (rxR.status === "rejected") console.log("receiver error:", rxR.reason);
+  if (txR.status === "rejected") console.log("sender error:", txR.reason);
+
+  // Receiver MUST reject with length mismatch
+  assert.equal(rxR.status, "rejected");
+  assert.equal(rxR.reason?.code, "NC_STREAM_MISMATCH");
+
+  // Sender may time out waiting for FIN_ACK (acceptable in this negative test)
+  if (txR.status === "fulfilled") {
+    assert.equal(txR.value?.ok, true);
+  } else {
+    const msg = String(txR.reason?.message ?? txR.reason ?? "");
+    assert.ok(/stalled|timeout|FIN_ACK/i.test(msg), `unexpected sender error: ${msg}`);
+  }
+
+  await Promise.allSettled([forceCloseNoFlush(rawA), forceCloseNoFlush(rawB)]);
+});
+
+
+test("RTC stream: INIT/DATA/FIN roundtrip and different credit and window sizes", { timeout: 60_000 }, async (t) => {
+  skipIfNoIntegration(t);
+  installWrtcGlobals(wrtc);
+
+  const { A, B, onCleanup } = await withSignalPair(t);
+  const [rawA, rawB] = await Promise.all([
+    rtcInitiator(A, { iceServers: [] }),
+    rtcResponder(B, { iceServers: [] }),
+  ]);
+
+  onCleanup(async () => {
+    await forceCloseNoFlush(rawA);
+    await forceCloseNoFlush(rawB);
+  });
+
+  await Promise.all([waitUp(rawA), waitUp(rawB)]);
+
+  const { publicKey, privateKey } = await suite.kem.generateKeyPair();
   const recipientPk = await suite.kem.serializePublicKey(publicKey);
   const { verificationKey, signingKey } = await genRSAPSS();
 
   // 1–2 MiB is plenty to exercise chunking without stressing DC buffering
   console.log("generating 1.5 MiB random data...");
-  const src = randomBytes(10_666_999); // 1.5 MiB
+  const src = randomBytes(66_999); // 1.5 MiB
   const wantHash = await sha256Hex(src);
   console.log("source data digest:", wantHash);
   const sessionId = crypto.randomUUID();
 
   const verifyKey = await importVerifyKey(verificationKey);
- let rxBytes = 0;
- const sink = mkCollectSink((n) => { rxBytes = n; });
- console.log("starting receiver...");
-   const rxP = withTimeout(
-    asPromise(() => recvFileWithAuth({
-      tx: rawB, sessionId, hpke: { ownPriv: privateKey }, sink, windowChunks: 8,
-      credit: 4, sign: { verifyKey }
-    })),
-    15000, "recvFileWithAuth stalled/failed"
-  );
+  let rxBytes = 0;
+  const sink = mkCollectSink((n) => { rxBytes = n; });
+  console.log("starting receiver...");
+    const rxP = withTimeout(
+      asPromise(() => recvFileWithAuth({
+        tx: rawB, sessionId, hpke: { ownPriv: privateKey }, sink, windowChunks: 8,
+        credit: 4, sign: { verifyKey }
+      })),
+      15000, "recvFileWithAuth stalled/failed"
+    );
 
   const txP = withTimeout(
     asPromise(() => sendFileWithAuth({

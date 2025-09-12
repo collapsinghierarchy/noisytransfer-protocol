@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sha256, shake128, toHex, fromHex, constantTimeEqual, createSHA256, Readable } from "@noisytransfer/crypto";
+import { sha256, shake128, constantTimeEqual, createSHA256, Readable } from "@noisytransfer/crypto";
+import {toHex, fromHex, asU8} from "@noisytransfer/util";
 import { webcrypto, createHash } from "node:crypto";
 globalThis.crypto ??= webcrypto;
 

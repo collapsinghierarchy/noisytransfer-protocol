@@ -141,7 +141,7 @@ test("RTC stream: dedicated sink + finAck + progress + chunking options", { time
    console.log("starting receiver...");
      const rxP = withTimeout(
       asPromise(() => recvFileWithAuth({
-        tx: rawB, sessionId, hpke: { ownPriv: privateKey }, sink, expectBytes: src.byteLength,    onProgress: async (rcvd, total) => {
+        tx: rawB, sessionId, hpke: { ownPriv: privateKey }, sink,    onProgress: async (rcvd, total) => {
       progressCalls++;
       // total is either 0 (unknown) or the announced total; rcvd must be monotonic and <= expectBytes
       assert.ok(rcvd >= 0 && rcvd <= src.byteLength);

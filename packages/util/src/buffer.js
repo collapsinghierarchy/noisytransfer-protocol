@@ -27,9 +27,9 @@ export function isByteLike(x) {
   );
 }
 
-/** Concatenate ArrayBuffer/TypedArray values; returns ArrayBuffer to match existing ABI. */
-export function concat(...bufs) {
-  const len = bufs.reduce((n, b) => n + (b.byteLength ?? asU8(b).byteLength), 0);
+/** Concatenate values into a **Uint8Array** (preferred for most callers). */
+export function concatU8(...bufs) {
+  const len = bufs.reduce((n, b) => n + ((b?.byteLength ?? asU8(b).byteLength) >>> 0), 0);
   const out = new Uint8Array(len);
   let off = 0;
   for (const b of bufs) {
@@ -37,7 +37,12 @@ export function concat(...bufs) {
     out.set(u8, off);
     off += u8.byteLength;
   }
-  return out.buffer;
+  return out;
+}
+
+/** Back-compat: concatenate and return an **ArrayBuffer** (legacy ABI). */
+export function concat(...bufs) {
+  return concatU8(...bufs).buffer;
 }
 
 /** Boolean flag → 1-byte ArrayBuffer (0 | 1). */
@@ -58,8 +63,18 @@ export function lpConcat(parts) {
   return asU8(concat(...segs));
 }
 
+/** Hex helpers (tiny and dependency-free) */
 export function toHex(u8) {
+  const u = asU8(u8);
   let s = "";
-  for (let i = 0; i < u8.length; i++) s += (u8[i] >>> 4).toString(16) + (u8[i] & 15).toString(16);
+  for (let i = 0; i < u.length; i++) s += (u[i] >>> 4).toString(16) + (u[i] & 15).toString(16);
   return s;
+}
+
+export function fromHex(hex) {
+  const h = String(hex).replace(/^0x/i, "");
+  if (h.length % 2) throw new TypeError("fromHex: odd length");
+  const out = new Uint8Array(h.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
+  return out;
 }

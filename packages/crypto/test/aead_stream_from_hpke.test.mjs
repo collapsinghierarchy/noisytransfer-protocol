@@ -17,11 +17,11 @@ test("mkAeadStreamFromHpke end-to-end streaming", async (t) => {
 
   console.log("Stream IDs:", senderStream.id, receiverStream.id);
   assert.equal(senderStream.id, receiverStream.id);
-  console.log("Stream secrets:", senderStream.secret, receiverStream.secret);
   const chunks = ["alpha", "beta", "gamma"].map((s) => te.encode(s));
   const sealed = await Promise.all(chunks.map((c) => senderStream.seal(c)));
   for (let i = 0; i < sealed.length; i++) {
     const out = await receiverStream.open(sealed[i]);
+    console.log("chunk", i, ":", new TextDecoder().decode(out));
     assert.deepEqual(out, chunks[i]);
   }
 });

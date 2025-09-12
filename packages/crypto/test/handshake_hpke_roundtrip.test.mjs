@@ -50,3 +50,45 @@ test("stream: out-of-order decrypt fails (and recover with fresh receiver)", asy
   assert.equal(td.decode(p0), "zero");
   assert.equal(td.decode(p1), "one");
 });
+
+test("HPKE context serializes parallel seal/open", async () => {
+  const kp = await suite.kem.generateKeyPair();
+  const pub = await suite.kem.serializePublicKey(kp.publicKey);
+
+  const sender = await Crypto.createSenderSession(pub);
+  const recv = await Crypto.createReceiverSession(sender.enc, kp.privateKey);
+
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+
+  const chunks = Array.from({ length: 8 }, (_, i) => enc.encode(`m${i}`));
+
+  // parallel encrypt
+  const cts = await Promise.all(chunks.map(c => sender.seal(c)));
+  // parallel decrypt (order preserved via internal queue)
+  const pts = await Promise.all(cts.map(ct => recv.open(ct)));
+
+  assert.equal(dec.decode(pts[0]), "m0");
+  assert.equal(dec.decode(pts.at(-1)), "m7");
+  assert.deepEqual(pts.map(b => b.byteLength), chunks.map(b => b.byteLength));
+});
+
+test("mkAeadStreamFromHpke uses opts.id verbatim", async () => {
+  const kp = await suite.kem.generateKeyPair();
+  const pub = await suite.kem.serializePublicKey(kp.publicKey);
+
+  const id = "my/app/stream:v1:xyz";
+  const send = await Crypto.mkAeadStreamFromHpke("sender", pub, undefined, { id });
+  const recv = await Crypto.mkAeadStreamFromHpke("receiver", send.enc, kp.privateKey, { id });
+
+  assert.equal(send.id, id);
+  assert.equal(recv.id, id);
+
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+
+  const ct = await send.seal(enc.encode("alpha"), enc.encode(id)); // use id as AAD for demonstration
+  const pt = await recv.open(ct, enc.encode(id));
+
+  assert.equal(dec.decode(pt), "alpha");
+});

@@ -1,15 +1,7 @@
 import { CRYPTO } from "@noisytransfer/constants";
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { b64u, unb64u } from "@noisytransfer/util/base64";
-import { asU8, concat } from "@noisytransfer/util/buffer";
-import { u32be } from "@noisytransfer/util/serial";
-
+import { b64u, unb64u, asU8, concat, u32be } from "@noisytransfer/util";
 import { sha256, sha3_256, constantTimeEqual } from "./hash.js";
-
-const enc = new TextEncoder();
-
-// Domain separation label; keep stable across versions
-const DS_PREFIX = CRYPTO.COMMIT_DS_PREFIX;
 
 /** Select hasher by name; add new algs here */
 function getHasher(name = "SHA3-256") {
@@ -24,11 +16,12 @@ function getHasher(name = "SHA3-256") {
 
 /** Safe, length-prefixed transcript: DS || LP(label) || LP(data) || LP(nonce) */
 function buildTranscript({ label, data, nonce }) {
+  const enc = new TextEncoder();
   const L = enc.encode(label ?? "");
   const D = asU8(data);
   const N = asU8(nonce);
   const segs = [
-    enc.encode(DS_PREFIX),
+    enc.encode(CRYPTO.COMMIT_DS_PREFIX),
     asU8(u32be(L.byteLength)),
     L,
     asU8(u32be(D.byteLength)),

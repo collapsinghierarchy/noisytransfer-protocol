@@ -6,7 +6,6 @@
   "packageManager": "npm@10",
   "scripts": {
     "test": "node --test",
-    "test:spec": "node scripts/run-tests-ci.mjs",
     "test:unit": "node scripts/run-tests-ci.mjs",
     "test:ci:unit": "CI=1 node --test --test-reporter=spec packages",
     "test:all:unit": "npm run test:spec",

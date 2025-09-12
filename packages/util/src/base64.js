@@ -62,6 +62,26 @@ export const b64url = (buf) => {
   return base.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 };
 
+/**
+ * base64url -> Uint8Array (works in browser and Node)
+ * @param {string} s
+ * @returns {Uint8Array}
+ */
+export function b64uToBytes(s) {
+  if (typeof s !== "string") throw new TypeError("b64uToBytes: input must be string");
+  const padLen = (4 - (s.length % 4)) % 4;
+  const b64 = (s + "=".repeat(padLen)).replace(/-/g, "+").replace(/_/g, "/");
+  if (typeof atob === "function") {
+    const bin = atob(b64);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  // Node fallback
+  const buf = Buffer.from(b64, "base64");
+  return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+}
+
 // Back-compat names used around the codebase:
 export const b64u = b64url;
 export const unb64u = unb64;

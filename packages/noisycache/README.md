@@ -1,19 +1,8 @@
-# @noisytransfer/noisycache
+# @noisytransfer/noisycache (DEPRECATED)
 
-Content caching and transfer helpers for NoisyTransfer.
+> This package is no longer published or maintained. Its functionality has been superseded by a combination of:
+>
+> - **@noisytransfer/noisystream** — frame-based streaming with flow control and final signatures.
+> - **@noisytransfer/crypto** — AEAD streams (HPKE exporter) and hash/sign helpers.
 
-## Exports
-
-- `uploadCiphertext({ storage, source, encryptor, ... })`
-- `downloadAndDecrypt({ storage, objectId, manifest, decryptor, ... })`
-- `runCourierSender({ tx, sessionId, sendMsg, keyPacket, signingKey })`
-- `mkSendMsgWithVK(verificationKeyU8)`
-- `runCourierReceiver({ tx, sessionId, recvMsg, recipientPrivateKey })`
-- `buildKeyPacket(details)`
-- `parseKeyPacket(bytes)`
-
-```js
-import { uploadCiphertext, downloadAndDecrypt } from "@noisytransfer/noisycache";
-```
-
-APIs are experimental and may change.
+The package is now marked `"private": true` in `package.json` to prevent future publishes.

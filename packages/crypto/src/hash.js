@@ -1,4 +1,4 @@
-import { asU8, concat } from "@noisytransfer/util/buffer";
+import { asU8, concat, toHex, fromHex } from "@noisytransfer/util";
 import { u32be } from "@noisytransfer/util/serial";
 import { createHash as nodeCreateHash, webcrypto as nodeCrypto } from "node:crypto";
 import { Readable } from "node:stream";
@@ -28,21 +28,6 @@ export function constantTimeEqual(a, b) {
   let r = 0;
   for (let i = 0; i < ua.byteLength; i++) r |= ua[i] ^ ub[i];
   return r === 0;
-}
-
-/** Hex helpers (tiny and dependency-free) */
-export function toHex(u8) {
-  const u = asU8(u8);
-  let s = "";
-  for (let i = 0; i < u.length; i++) s += (u[i] >>> 4).toString(16) + (u[i] & 15).toString(16);
-  return s;
-}
-export function fromHex(hex) {
-  const h = String(hex).replace(/^0x/i, "");
-  if (h.length % 2) throw new TypeError("fromHex: odd length");
-  const out = new Uint8Array(h.length / 2);
-  for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
-  return out;
 }
 
 /* ------------------------- SHA3 / SHAKE provider -------------------------- */

@@ -1,11 +1,10 @@
 import { PROTO_LABEL } from "@noisytransfer/constants";
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
-import { unb64u } from "@noisytransfer/util/base64";
-import { lpConcat } from "@noisytransfer/util/buffer";
+import { lpConcat, toHex , unb64u } from "@noisytransfer/util";
 
 import * as hash from "./hash.js";
 
-let { sha3_256, shake128, toHex } = hash;
+let { sha3_256, shake128} = hash;
 
 const enc = new TextEncoder();
 

@@ -2,6 +2,7 @@
   "name": "@noisytransfer/noisytransfer-protocol",
   "version": "0.2.2",
   "type": "module",
+  "private": true,
   "main": "src/index.js",
   "exports": {
     ".": {
@@ -16,7 +17,6 @@
   "dependencies": {
     "@noisytransfer/noisyauth": "^0.2.1",
     "@noisytransfer/noisystream": "^0.2.1",
-    "@noisytransfer/noisycache": "^0.2.1",
     "@noisytransfer/crypto": "^0.2.1",
     "@noisytransfer/errors": "^0.2.1",
     "@noisytransfer/transport": "^0.2.1"

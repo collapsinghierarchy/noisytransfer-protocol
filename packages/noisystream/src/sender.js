@@ -33,6 +33,12 @@ import {
 // Derive a stable AAD id bound to protocol/version/direction/session/length.
 // Produces a short ASCII token via base64url(SHA-256(JSON)).
 const __te = new TextEncoder();
+/**
+ * Compute canonical stream id bound into HPKE AAD.
+ * base64url(SHA-256(JSON({p:"noisystream",v:1,mode:"hpke",dir,sid,tot})))
+ * @param {{dir:"S2R"|"R2S", sessionId:string, totalBytes:number}} p
+ * @returns {Promise<string>}
+ */
 async function computeAadId({ dir, sessionId, totalBytes }) {
   const canon = {
     p: "noisystream", // protocol label
@@ -48,8 +54,13 @@ async function computeAadId({ dir, sessionId, totalBytes }) {
 
 /**
  * Stable API: sendFileWithAuth(...)
- * Sends ns_init → waits ns_ready → streams ns_data(seq++) → sends ns_fin(ok).
- * @param {SendOpts} opts
+ * Flow: INIT → READY → DATA* → FIN → FIN_ACK (bounded retries).
+ * - Creates one HPKE sender context and reuses it for all chunks.
+ * - Respects optional credit-based flow control advertised by the receiver.
+ * - Optionally signs the transcript at FIN (RSA-PSS by default).
+ *
+ * @param {import("./types.js").SendOpts} opts
+ * @returns {Promise<{ ok: true, bytes: number, frames: number }>}
  */
 export async function sendFileWithAuth(opts) {
   const {
@@ -100,7 +111,7 @@ export async function sendFileWithAuth(opts) {
   if (maxBufferedBytes !== undefined && !(Number.isInteger(maxBufferedBytes) && maxBufferedBytes > 0)) {
     throw new NoisyError({ code: "NC_BAD_PARAM", message: "sendFileWithAuth: maxBufferedBytes must be a positive integer when provided" });
   }
-  // Validate source shape: ReadableStream | AsyncIterable | Blob-like | ArrayBuffer(View)
+// Validate source shape: ReadableStream | (Async)Iterable | Blob | ArrayBuffer(View) 
   const isReadableStream = !!source?.getReader && typeof source.getReader === "function";
   const isAsyncIterable = !!source?.[Symbol.asyncIterator];
   const isBlobLike = !!source?.arrayBuffer && typeof source.arrayBuffer === "function" && Number.isInteger(source?.size ?? 0);
@@ -137,6 +148,9 @@ export async function sendFileWithAuth(opts) {
   }
 
   // 1) prepare and validate source iterator
+  // For streaming sources (AsyncIterable/Iterable), `totalBytes` is REQUIRED and becomes
+  // the authoritative value advertised in INIT.totalBytes. For buffer-like sources
+  // (Uint8Array/ArrayBuffer/Blob), the derived length is used instead.
   const { iter, totalBytesKnown, totalBytes } = makeChunkIterator(
     source,
     chunkBytes,
@@ -242,7 +256,7 @@ export async function sendFileWithAuth(opts) {
     });
   });
 
-  // 3) stream data (optional adaptive chunk sizing)
+  // 3) stream data (optional adaptive chunk sizing, optional credit gating)
   let sent = 0;
   let seq = 0;
   let curChunk = chunkBytes;
@@ -285,7 +299,8 @@ export async function sendFileWithAuth(opts) {
     if (!(u8 instanceof Uint8Array)) {
       throw new NoisyError({ code: "NC_INTERNAL", message: "sendFileWithAuth: chunk to seal must be Uint8Array" });
     }
-    const ct = await hpkeSend.seal(u8); // HPKE stream handles AAD/seq internally
+    // HPKE stream handles nonce/seq internally, per-context.
+    const ct = await hpkeSend.seal(u8); 
     safeSend(tx, packStreamData({ sessionId, seq, chunk: ct, aead: true }));
     logger.debug("[ns] sender: sent chunk", { seq, bytes: u8.byteLength });
     // include ciphertext in transcript (order is seq)
@@ -313,6 +328,7 @@ export async function sendFileWithAuth(opts) {
     }
   }
   logger.debug("[ns] sender: source complete", { sent, totalBytes, seq });
+  // Best-effort flush; FIN/ACK governs correctness, not this flush
   try {
     await flushTx(tx, { timeoutMs: 3000, resolveOnClose: true });
   } catch (err) {
@@ -393,7 +409,14 @@ function safeSend(tx, frame) {
   }
 }
 
-/** Build a chunk iterator over supported sources. */
+/**
+ * Normalize arbitrary sources (Blob | (Async)Iterable | Uint8Array | ArrayBuffer)
+ * into an async iterator of Uint8Array, and report totalBytes when known.
+ * @param {any} source
+ * @param {number} chunkBytes
+ * @param {number|undefined} totalBytesOpt
+ * @returns {{ iter: AsyncIterable<Uint8Array>, totalBytesKnown: boolean, totalBytes: number }}
+ */
 function makeChunkIterator(source, chunkBytes, totalBytesOpt) {
   // Blob
   if (typeof Blob !== "undefined" && source instanceof Blob) {
