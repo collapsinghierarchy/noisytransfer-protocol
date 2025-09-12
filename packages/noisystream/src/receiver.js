@@ -247,7 +247,7 @@ export async function recvFileWithAuth(opts) {
 
           case STREAM.FIN: {
               const fin = parseStreamFin(m);
-              getLogger().debug("[ns] receiver: FIN received", { state });
+              logger.debug("[ns] receiver: FIN received", { state });
               await lastWriteP;
               state.frames++;
             if (sigState) {
