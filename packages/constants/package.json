@@ -2,7 +2,7 @@
   "name": "@noisytransfer/constants",
   "version": "0.2.1",
   "type": "module",
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -11,7 +11,7 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "exports": {
     ".": {

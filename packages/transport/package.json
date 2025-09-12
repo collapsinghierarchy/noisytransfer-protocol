@@ -7,7 +7,7 @@
     "src"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "test": "NODE_OPTIONS='--preserve-symlinks --preserve-symlinks-main' node --test"
@@ -30,7 +30,7 @@
   },
   "devDependencies": {},
   "optionalDependencies": {},
-  "license": "AGPL-3.0-only",
+  "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
   },

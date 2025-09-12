@@ -7,11 +7,8 @@
   "scripts": {
     "test": "node --test",
     "test:unit": "node scripts/run-tests-ci.mjs",
-    "test:ci:unit": "CI=1 node --test --test-reporter=spec packages",
-    "test:all:unit": "npm run test:spec",
-    "test:ci:webrtc": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-webrtc.mjs",
     "test:rtc": "CI_ALLOW_INTEGRATION=1 TEST_SIGNAL_MODE=memory node scripts/run-webrtc.mjs",
-    "test:ci": "npm run test:spec && npm run test:ci:webrtc",
+    "test:ci": "npm run test:unit && npm run test:rtc",
     "test:crypto": "node scripts/run-package.mjs crypto",
     "test:errors": "node scripts/run-package.mjs errors",
     "test:util": "node scripts/run-package.mjs util",

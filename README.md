@@ -257,6 +257,19 @@ If you discover a security issue or vulnerability, please **do not** open a publ
 
 ---
 
-## License
+## Licensing
 
-AGPL-3.0-or-later. See [LICENSE](./LICENSE).
+This monorepo is **multi-licensed** at the package level:
+
+- **AGPL-3.0-only**
+  - `@noisytransfer/noisystream` – encrypted, ordered streaming of data sources
+  - `@noisytransfer/noisyauth` – SAS-based authentication & key announcement
+  - `@noisytransfer/noisycache`
+
+- **Apache-2.0**
+  - `@noisytransfer/crypto` – HPKE & signatures toolkit (wraps hpke-js under the hood)
+  - `@noisytransfer/constants`, `@noisytransfer/errors`, `@noisytransfer/util`, `@noisytransfer/transport`, `@noisytransfer/noisycache`, `@noisytransfer/noisytransfer-protocol`, `@noisytransfer/test-helpers`
+
+> Each published package contains its own `LICENSE` file with the appropriate text.  
+> The root repo includes `LICENSE-APACHE-2.0` and `LICENSE-AGPL-3.0` for convenience.
+
