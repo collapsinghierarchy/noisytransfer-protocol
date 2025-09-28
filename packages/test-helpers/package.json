@@ -20,7 +20,7 @@
   ],
   "sideEffects": false,
   "dependencies": {
-    "@noisytransfer/transport": "^0.2.1",
+    "@noisytransfer/transport": "^0.2.3",
     "ws": "^8.18.0"
   },
   "publishConfig": {

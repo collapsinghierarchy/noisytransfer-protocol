@@ -24,9 +24,9 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@noisytransfer/errors": "^0.2.1",
-    "@noisytransfer/util": "^0.2.1",
-    "@noisytransfer/constants": "^0.2.1"
+    "@noisytransfer/errors": "^0.2.2",
+    "@noisytransfer/util": "^0.2.2",
+    "@noisytransfer/constants": "^0.2.2"
   },
   "devDependencies": {},
   "optionalDependencies": {},

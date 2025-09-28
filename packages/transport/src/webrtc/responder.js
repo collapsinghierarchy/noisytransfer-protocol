@@ -7,6 +7,7 @@ import {
   getLocalFingerprintFromPC,
   getRemoteFingerprintFromPC,
 } from "./rtc-utils.js";
+import { wrapDataChannel } from "./dc.js";
 
 /**
  * Return a Transport facade immediately; connect later when an offer arrives.
@@ -34,12 +35,20 @@ export function rtcResponder(signal, rtcCfg = {}, opts = {}) {
 
   let pc = null;
   let dc = null;
+  let wrappedDc = null;
+  let wrappedMsgUnsub = null;
+  const wrappedCtlUnsubs = new Set();
+  let hasClosed = false;
   let unsubSignal = null;
   let iceUnsub = null;
 
   // Buffer ICE/EoC arriving before we create the RTCPeerConnection (trickle only)
   const prePending = [];
   let preEoc = false;
+
+  const sendGuard = (_) => {
+    throw new NoisyError({ code: "NC_TRANSPORT_DOWN", message: "RTC DataChannel not open" });
+  };
 
   const tx = {
     get isConnected() {
@@ -70,17 +79,66 @@ export function rtcResponder(signal, rtcCfg = {}, opts = {}) {
     getRemoteFingerprint() {
       return getRemoteFingerprintFromPC(pc);
     },
-    send(_) {
-      throw new NoisyError({ code: "NC_TRANSPORT_DOWN", message: "RTC DataChannel not open" });
-    },
-    close(code = 1000, reason = "closed") {
+    get bufferedAmount() {
       try {
-        pc?.close?.();
+        return wrappedDc?.bufferedAmount ?? 0;
+      } catch {
+        return 0;
+      }
+    },
+    async flush() {
+      try {
+        await wrappedDc?.flush?.();
       } catch {}
+    },
+    features: undefined,
+    send: sendGuard,
+    async close(code = 1000, reason = "closed") {
+      clearIceWatchdog();
+      try {
+        unsubSignal?.();
+      } catch {}
+      try {
+        iceUnsub?.();
+      } catch {}
+      const currentWrapped = wrappedDc;
+      cleanupWrappedDc();
+      try {
+        await currentWrapped?.close?.(code, reason);
+      } catch {
+        try {
+          pc?.close?.();
+        } catch {}
+      }
       setConnected(false);
-      fireClose({ code, reason });
+      safeFireClose({ code, reason });
     },
   };
+
+   function cleanupWrappedDc() {
+    try {
+      wrappedMsgUnsub?.();
+    } catch {}
+    wrappedMsgUnsub = null;
+    for (const un of [...wrappedCtlUnsubs]) {
+      try {
+        un?.();
+      } catch {}
+      wrappedCtlUnsubs.delete(un);
+    }
+    wrappedCtlUnsubs.clear();
+    wrappedDc = null;
+    dc = null;
+    tx.send = sendGuard;
+    tx.features = undefined;
+  }
+
+  function safeFireClose(ev) {
+    if (hasClosed) return;
+    hasClosed = true;
+    fireClose(ev);
+  }
+
 
   function fireUp() {
     for (const f of [...onUpHandlers])
@@ -124,7 +182,7 @@ export function rtcResponder(signal, rtcCfg = {}, opts = {}) {
           pc?.close?.();
         } catch {}
         setConnected(false);
-        fireClose({ code: 1011, reason: "NC_RTC_ICE_TIMEOUT" });
+        safeFireClose({ code: 1011, reason: "NC_RTC_ICE_TIMEOUT" });
       }, ICE_TIMEOUT_MS);
     }
   }
@@ -236,52 +294,47 @@ export function rtcResponder(signal, rtcCfg = {}, opts = {}) {
 
         // DC from initiator
         pc.ondatachannel = (ev) => {
+          cleanupWrappedDc();
+          hasClosed = false;
           dc = ev.channel;
-          dc.binaryType = "arraybuffer";
+          wrappedDc = wrapDataChannel(dc, pc, "Responder");
+          tx.features = wrappedDc.features;
 
-          dc.onopen = () => {
+          wrappedMsgUnsub = wrappedDc.onMessage((payload) => {
+            emitMessage(payload);
+          });
+
+          const unUp = wrappedDc.onUp(() => {
             clearIceWatchdog();
-            tx.send = (payload) => {
-              const out =
-                typeof payload === "string" ||
-                payload instanceof ArrayBuffer ||
-                ArrayBuffer.isView(payload)
-                  ? payload
-                  : JSON.stringify(payload);
-              dc.send(out);
-            };
-            dc.onmessage = (e) => {
-              let v = e.data;
-              if (typeof v === "string") {
-                try {
-                  v = JSON.parse(v);
-                } catch {}
-              }
-              emitMessage(v);
-            };
+            tx.send = (...args) => wrappedDc.send(...args);
             setConnected(true);
             if (!NON_TRICKLE) {
               try {
                 pc.onicecandidate = null;
               } catch {}
             }
-          };
-
-          dc.onclose = () => {
+          });
+          const unDown = wrappedDc.onDown(() => {
             setConnected(false);
-            fireClose({ code: 1000, reason: "dc closed" });
-          };
-
-          dc.onerror = () => {
+            tx.send = sendGuard;
+          });
+          const unClose = wrappedDc.onClose(() => {
             setConnected(false);
-            fireClose({ code: 1011, reason: "dc error" });
-          };
+            tx.send = sendGuard;
+            cleanupWrappedDc();
+            safeFireClose({ code: 1000, reason: "dc closed" });
+          });
+          wrappedCtlUnsubs.add(unUp);
+          wrappedCtlUnsubs.add(unDown);
+          wrappedCtlUnsubs.add(unClose);
         };
 
         pc.addEventListener("connectionstatechange", () => {
           if (pc.connectionState === "failed") {
             setConnected(false);
-            fireClose({ code: 1011, reason: "RTC failed" });
+            tx.send = sendGuard;
+            cleanupWrappedDc();
+            safeFireClose({ code: 1011, reason: "RTC failed" });
           }
         });
       }
@@ -323,7 +376,7 @@ export function rtcResponder(signal, rtcCfg = {}, opts = {}) {
         pc?.close?.();
       } catch {}
       setConnected(false);
-      fireClose({ code: 1011, reason: String(e?.message || e) });
+      safeFireClose({ code: 1011, reason: String(e?.message || e) });
     }
   }
 

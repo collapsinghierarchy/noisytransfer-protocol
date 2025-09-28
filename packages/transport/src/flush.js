@@ -1,4 +1,3 @@
-// packages/transport/src/flush.js
 import { NoisyError } from "@noisytransfer/errors/noisy-error";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

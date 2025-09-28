@@ -3,7 +3,7 @@
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "npm@10",
+  "packageManager": "npm@11",
   "scripts": {
     "test": "node --test",
     "test:unit": "node scripts/run-tests-ci.mjs",

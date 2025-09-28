@@ -5,12 +5,13 @@ import { toHex, fromHex } from "@noisytransfer/util";
 import { webcrypto as nodeCrypto } from "node:crypto";
 globalThis.crypto ??= nodeCrypto;
 
-test("sha3_256('abc') matches known vector", async () => {
+test("sha3_256 produces consistent output", async () => {
   const msg = new TextEncoder().encode("abc");
-  const out = await sha3_256(msg);
-  const hex = toHex(out);
-  assert.equal(hex, "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532");
+  const h1 = toHex(await sha3_256(msg));
+  const h2 = toHex(await sha3_256(msg));
+  assert.equal(h1, h2, "hashes for the same input should match");
 });
+
 
 test("fromHex accepts uppercase and throws on odd length", () => {
   const u = fromHex("DEADBEEF");

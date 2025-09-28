@@ -1,6 +1,6 @@
 {
   "name": "@noisytransfer/noisystream",
-  "version": "0.2.3",
+  "version": "0.2.5",
   "type": "module",
   "main": "src/index.js",
   "files": [
@@ -24,15 +24,15 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@noisytransfer/crypto": "^0.2.1",
-    "@noisytransfer/errors": "^0.2.1",
-    "@noisytransfer/util": "^0.2.1",
-    "@noisytransfer/transport": "^0.2.1"
+    "@noisytransfer/crypto": "^0.2.3",
+    "@noisytransfer/errors": "^0.2.2",
+    "@noisytransfer/util": "^0.2.2",
+    "@noisytransfer/transport": "^0.2.3"
   },
   "devDependencies": {
-    "ws": "^8.18.0",
-    "@noisytransfer/transport": "^0.2.1",
-    "@roamhq/wrtc": "^0.9.0"
+    "ws": "^8.18.3",
+    "@noisytransfer/transport": "^0.2.3",
+    "@roamhq/wrtc": "^0.9.1"
   },
   "optionalDependencies": {},
   "license": "AGPL-3.0-only",

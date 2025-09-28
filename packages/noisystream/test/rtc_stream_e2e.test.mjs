@@ -29,7 +29,7 @@ import {
   skipIfNoIntegration,
 } from "@noisytransfer/test-helpers";
 
-import { rtcInitiator, rtcResponder, forceCloseNoFlush } from "@noisytransfer/transport";
+import { rtcInitiator, rtcResponder, forceCloseNoFlush, dialRtcUntilReady } from "@noisytransfer/transport";
 import { sendFileWithAuth, recvFileWithAuth } from "@noisytransfer/noisystream";
 import { suite, genRSAPSS, importVerifyKey } from "@noisytransfer/crypto";
 
@@ -246,6 +246,7 @@ test("RTC stream: INIT/DATA/FIN roundtrip and different credit and window sizes"
   const { publicKey, privateKey } = await suite.kem.generateKeyPair();
   const recipientPk = await suite.kem.serializePublicKey(publicKey);
   const { verificationKey, signingKey } = await genRSAPSS();
+  const verifyKey = await importVerifyKey(verificationKey);
 
   // 1–2 MiB is plenty to exercise chunking without stressing DC buffering
   console.log("generating 1.5 MiB random data...");
@@ -254,7 +255,6 @@ test("RTC stream: INIT/DATA/FIN roundtrip and different credit and window sizes"
   console.log("source data digest:", wantHash);
   const sessionId = crypto.randomUUID();
 
-  const verifyKey = await importVerifyKey(verificationKey);
   let rxBytes = 0;
   const sink = mkCollectSink((n) => { rxBytes = n; });
   console.log("starting receiver...");
@@ -287,6 +287,83 @@ test("RTC stream: INIT/DATA/FIN roundtrip and different credit and window sizes"
   assert.equal(rxR.value?.signatureVerified, true);
 
   // Explicit teardown: close both sides so Node can exit cleanly.
+  await Promise.allSettled([forceCloseNoFlush(rawA), forceCloseNoFlush(rawB)]);
+});
+
+test("e2e: noisystream using dialRtcUntilReady() (initiator A, responder B)", async (t) => {
+  skipIfNoIntegration(t);
+  installWrtcGlobals(wrtc);
+
+  const { A, B, onCleanup } = await withSignalPair(t);
+
+  // Use the high-level dial helper instead of constructing initiator/responder directly.
+  // NOTE: backoffMs is numeric here because transport's dialRtcUntilReady treats it as a scalar per-attempt base.
+  const [{ tx: rawA }, { tx: rawB }] = await Promise.all([
+    dialRtcUntilReady({ role: "initiator", signal: A, rtcCfg: { iceServers: [] }, maxAttempts: 6, backoffMs: 200 }),
+    dialRtcUntilReady({ role: "responder", signal: B, rtcCfg: { iceServers: [] }, maxAttempts: 1, backoffMs: 0 }),
+  ]);
+
+  onCleanup(async () => {
+    await Promise.allSettled([forceCloseNoFlush(rawA), forceCloseNoFlush(rawB)]);
+  });
+
+  // --- crypto + source setup (same as the direct-init test) ---
+  const suiteId = "noisystream-dial-e2e";
+
+  const { publicKey, privateKey } = await suite.kem.generateKeyPair();
+  const recipientPk = await suite.kem.serializePublicKey(publicKey);
+  const { verificationKey, signingKey } = await genRSAPSS();
+  const verifyKey = await importVerifyKey(verificationKey);
+
+  // 400 KiB payload exercises chunking without stressing buffers.
+  const srcBytes = new Uint8Array(400 * 1024);
+  for (let i = 0; i < srcBytes.length; i++) srcBytes[i] = (Math.random() * 256) | 0;
+
+  const wantHash = await (async () => {
+    const view = srcBytes.buffer.slice(srcBytes.byteOffset, srcBytes.byteOffset + srcBytes.byteLength);
+    const d = await crypto.subtle.digest("SHA-256", view);
+    return Buffer.from(d).toString("hex");
+  })();
+
+  const sessionId = crypto.randomUUID();
+
+  let rxBytes = 0;
+  const sink = mkCollectSink((n) => { rxBytes = n; });
+
+  // Kick off receiver first (responder side tx = rawB)
+  const rxP = (async () => recvFileWithAuth({
+    tx: rawB,
+    sessionId,
+    hpke: { ownPriv: privateKey },
+    sink,
+    sign: { verifyKey },
+  }))();
+
+  // Then sender (initiator side tx = rawA)
+  const txP = (async () => sendFileWithAuth({
+    tx: rawA,
+    sessionId,
+    source: srcBytes,
+    hpke: { peerMaterial: recipientPk },
+    sign: { privateKey: signingKey, publicKeySpki: verificationKey },
+  }))();
+
+  const [rxR, txR] = await Promise.allSettled([rxP, txP]);
+  assert.equal(rxR.status, "fulfilled", `recv failed: ${rxR.status === "rejected" ? rxR.reason : ""}`);
+  assert.equal(txR.status, "fulfilled", `send failed: ${txR.status === "rejected" ? txR.reason : ""}`);
+
+  // Validate content + progress
+  const gotU8 = sink.result();
+  const gotHash = await (async () => {
+    const view = gotU8.buffer.slice(gotU8.byteOffset, gotU8.byteOffset + gotU8.byteLength);
+    const d = await crypto.subtle.digest("SHA-256", view);
+    return Buffer.from(d).toString("hex");
+  })();
+
+  assert.equal(gotU8.byteLength, srcBytes.byteLength, "byte lengths differ");
+  assert.equal(gotHash, wantHash, "SHA-256 mismatch");
+  assert.ok(rxBytes >= srcBytes.byteLength, "progress callback under-counted");
+
   await Promise.allSettled([forceCloseNoFlush(rawA), forceCloseNoFlush(rawB)]);
 });
 

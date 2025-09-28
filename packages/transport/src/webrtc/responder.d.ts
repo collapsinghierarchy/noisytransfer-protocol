@@ -8,6 +8,8 @@ export function rtcResponder(signal: any, rtcCfg?: {}, opts?: {}): {
     onDown(cb: any): () => boolean;
     onClose(cb: any): () => boolean;
     onMessage(cb: any): () => boolean;
+    readonly bufferedAmount: number;
+    flush(): Promise<void>;
     getLocalFingerprint(): {
         alg: string;
         bytes: Uint8Array<ArrayBuffer>;
@@ -16,6 +18,12 @@ export function rtcResponder(signal: any, rtcCfg?: {}, opts?: {}): {
         alg: string;
         bytes: Uint8Array<ArrayBuffer>;
     };
-    send(_: any): never;
-    close(code?: number, reason?: string): void;
+    features: {
+        durableOrdered: boolean;
+        ordered: boolean;
+        reliable: boolean;
+        peerFingerprints: () => any;
+    } | undefined;
+    send(_: any): void;
+    close(code?: number, reason?: string): Promise<void>;
 };

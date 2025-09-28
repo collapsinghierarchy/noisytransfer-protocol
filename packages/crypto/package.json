@@ -32,12 +32,12 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@hpke/core": "^1.7.3",
+    "@hpke/core": "^1.7.4",
     "@hpke/hybridkem-x25519-kyber768": "^1.6.1",
     "@noble/hashes": "^1.5.0",
-    "@noisytransfer/errors": "^0.2.1",
-    "@noisytransfer/util": "^0.2.1",
-    "@noisytransfer/constants": "^0.2.1"
+    "@noisytransfer/errors": "^0.2.2",
+    "@noisytransfer/util": "^0.2.2",
+    "@noisytransfer/constants": "^0.2.2"
   },
   "license": "Apache-2.0",
   "publishConfig": {

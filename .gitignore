@@ -1,1 +1,34 @@
-node_modules
+# dependencies
+/node_modules
+/packages/crypto/node_modules
+
+# build outputs
+/build
+/dist
+/assets
+/release
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor stuff
+.idea/
+.vscode/
+*.swp
+
+# coverage & test
+/coverage
+/.nyc_output
+
+# misc
+*.tgz
+*.zip
+*.tar
