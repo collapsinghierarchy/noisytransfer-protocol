@@ -303,6 +303,9 @@ export async function sendFileWithAuth(opts) {
     const ct = await hpkeSend.seal(u8); 
     safeSend(tx, packStreamData({ sessionId, seq, chunk: ct, aead: true }));
     logger.debug("[ns] sender: sent chunk", { seq, bytes: u8.byteLength });
+    if (!creditEnabled && !maxBufferedBytes) {
+      await safeFlush(tx, { resolveOnClose: true });
+    }
     // include ciphertext in transcript (order is seq)
     await sigAddData(sigState, seq, ct);
     logger.debug("[ns] sender: sigState updated", { seq, sigState });
@@ -329,25 +332,20 @@ export async function sendFileWithAuth(opts) {
   }
   logger.debug("[ns] sender: source complete", { sent, totalBytes, seq });
   // Best-effort flush; FIN/ACK governs correctness, not this flush
-  try {
-    await flushTx(tx, { timeoutMs: 3000, resolveOnClose: true });
-  } catch (err) {
-    // Ignore harmless flush timeouts; rely on FIN/ACK ordering for delivery
-    if (!(err && err.code === "NC_TRANSPORT_FLUSH_TIMEOUT")) throw err;
-  }
+  await safeFlush(tx, { timeoutMs: 3000, resolveOnClose: true });
     // resend FIN with bounded backoff until ACK or timeout
-    let tries = 0;
-    let done = false;
-    const unsub = tx.onMessage((m) => {
-      if (!m || m.type !== STREAM.FIN_ACK || m.sessionId !== sessionId) return;
-      try {
-        parseStreamFinAck(m);
-        done = true;
-      } catch {
-        // ignore invalid FIN_ACK
-        logger.warn("[ns] sender: invalid FIN_ACK");
-      }
-    });
+  let tries = 0;
+  let done = false;
+  const unsub = tx.onMessage((m) => {
+    if (!m || m.type !== STREAM.FIN_ACK || m.sessionId !== sessionId) return;
+    try {
+      parseStreamFinAck(m);
+      done = true;
+    } catch {
+      // ignore invalid FIN_ACK
+      logger.warn("[ns] sender: invalid FIN_ACK");
+    }
+  });
     try {
       let finSig, finAlg, finPub;
       const framesCount = seq + 2; // init + fin
@@ -392,6 +390,16 @@ export async function sendFileWithAuth(opts) {
   cleanup();
   logger.debug("[ns] sender: complete", { sessionId, bytes: sent, frames: seq + 2 /*init+fin*/ });
   return { ok: true, bytesSent: sent, frames: seq + 2 };
+}
+
+//internal
+async function safeFlush(tx, opts) {
+  try {
+    await flushTx(tx, opts);
+  } catch (err) {
+    // Ignore harmless flush timeouts; rely on FIN/ACK ordering for delivery
+    if (!(err && err.code === "NC_TRANSPORT_FLUSH_TIMEOUT")) throw err;
+  }
 }
 
 /** internal: single-arg send with error mapping */
